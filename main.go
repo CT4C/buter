@@ -59,19 +59,30 @@ func main() {
 	for node != nil {
 		currentPayload := node.PayloadList[node.CurrentPayloadIdx]
 
-		updatedText = updatedText[:node.Points[0]] + currentPayload + updatedText[node.Points[1]:]
+		if node.NextNode == nil {
+			for _, payload := range node.PayloadList {
+				updatedText = updatedText[:node.Points[0]] + payload + updatedText[node.Points[1]:]
+				node.CurrentPayloadIdx += 1
+				node.Points[1] = node.Points[0] + len(payload)
 
-		node.Points[1] = node.Points[0] + len(currentPayload)
+				fmt.Println(updatedText)
+			}
+			break
+		} else {
+			updatedText = updatedText[:node.Points[0]] + currentPayload + updatedText[node.Points[1]:]
 
-		positions := pattern.FindAllStringSubmatchIndex(updatedText, 1)
-		if len(positions) > 0 {
-			node.NextNode.Points[0] = positions[0][0]
-			node.NextNode.Points[1] = positions[0][1]
+			node.Points[1] = node.Points[0] + len(currentPayload)
+
+			positions := pattern.FindAllStringSubmatchIndex(updatedText, 1)
+			if len(positions) > 0 {
+				node.NextNode.Points[0] = positions[0][0]
+				node.NextNode.Points[1] = positions[0][1]
+			}
+			node.WorkingValue = currentPayload
+			node.CurrentPayloadIdx += 1
 		}
-		node.WorkingValue = currentPayload
-		node.CurrentPayloadIdx += 1
 
 		node = node.NextNode
-		fmt.Println(updatedText)
+		fmt.Println(node.Number, updatedText)
 	}
 }
