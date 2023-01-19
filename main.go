@@ -5,6 +5,10 @@ import (
 	"regexp"
 )
 
+var (
+	rePayloadPosition = regexp.MustCompile("(%[^%]+%)")
+)
+
 type PayloadNode struct {
 	Points            [2]int
 	WorkingValue      string
@@ -23,9 +27,7 @@ func main() {
 
 	payloadsSet := [][]string{payload1, payload2, payload3}
 
-	pattern := regexp.MustCompile("(%[^%]+%)")
-
-	matchedPositions := pattern.FindAllStringSubmatchIndex(text, len(payloadsSet))
+	matchedPositions := rePayloadPosition.FindAllStringSubmatchIndex(text, len(payloadsSet))
 
 	// Validate match length == payloads length
 
@@ -60,6 +62,7 @@ func main() {
 		currentPayload := node.PayloadList[node.CurrentPayloadIdx]
 
 		if node.NextNode == nil {
+			// Proceed last payload in Set
 			for _, payload := range node.PayloadList {
 				updatedText = updatedText[:node.Points[0]] + payload + updatedText[node.Points[1]:]
 				node.CurrentPayloadIdx += 1
@@ -69,11 +72,12 @@ func main() {
 			}
 			break
 		} else {
+			// Proceed top level payload
 			updatedText = updatedText[:node.Points[0]] + currentPayload + updatedText[node.Points[1]:]
 
 			node.Points[1] = node.Points[0] + len(currentPayload)
 
-			positions := pattern.FindAllStringSubmatchIndex(updatedText, 1)
+			positions := rePayloadPosition.FindAllStringSubmatchIndex(updatedText, 1)
 			if len(positions) > 0 {
 				node.NextNode.Points[0] = positions[0][0]
 				node.NextNode.Points[1] = positions[0][1]
@@ -83,6 +87,5 @@ func main() {
 		}
 
 		node = node.NextNode
-		fmt.Println(node.Number, updatedText)
 	}
 }
