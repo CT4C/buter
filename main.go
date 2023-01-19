@@ -70,6 +70,11 @@ func main() {
 
 				fmt.Println(updatedText)
 			}
+
+			/*
+				Increment previous paylaod index
+				set next node to previous one
+			*/
 			break
 		} else {
 			// Proceed top level payload
@@ -83,9 +88,15 @@ func main() {
 				node.NextNode.Points[1] = positions[0][1]
 			}
 			node.WorkingValue = currentPayload
-			node.CurrentPayloadIdx += 1
+
+			// node.CurrentPayloadIdx += 1
 		}
 
+		/*
+			IF current payload index == payload list length (IS END)
+			1. set next node to previous one
+			2. reset current payload index
+		*/
 		node = node.NextNode
 	}
 }
