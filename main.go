@@ -27,8 +27,8 @@ type PayloadNode struct {
 func main() {
 	text := "?param1=%x%&param2=%y%&param3=%z%"
 	payload1 := []string{"1", "2"}
-	payload2 := []string{"a", "b"}
-	payload3 := []string{"L", "M"}
+	payload2 := []string{"a", "b", "c"}
+	payload3 := []string{"L", "M", "N", "O"}
 
 	payloadsSet := [][]string{payload1, payload2, payload3}
 
