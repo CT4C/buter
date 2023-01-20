@@ -9,6 +9,11 @@ var (
 	rePayloadPosition = regexp.MustCompile("(%[^%]+%)")
 )
 
+var (
+	NeedToProceedPayloads = 1
+	proceededPayloads     = 0
+)
+
 type PayloadNode struct {
 	Points            [2]int
 	WorkingValue      string
@@ -20,10 +25,10 @@ type PayloadNode struct {
 }
 
 func main() {
-	text := "?param1=%x%&param2=%x%&param3=%x%"
-	payload1 := []string{"1", "2", "3"}
-	payload2 := []string{"a", "b", "c"}
-	payload3 := []string{"L", "M", "N"}
+	text := "?param1=%x%&param2=%y%&param3=%z%"
+	payload1 := []string{"1", "2"}
+	payload2 := []string{"a", "b"}
+	payload3 := []string{"L", "M"}
 
 	payloadsSet := [][]string{payload1, payload2, payload3}
 
@@ -31,11 +36,14 @@ func main() {
 
 	// Validate match length == payloads length
 
+	// Handling text substitute like Cluster Bobm in Burp Suite
 	var entryNode, previousNode *PayloadNode
-	for number, payload := range payloadsSet {
+	for number, payloads := range payloadsSet {
+		NeedToProceedPayloads *= len(payloads)
+
 		newNode := &PayloadNode{
 			Number:            number,
-			PayloadList:       payload,
+			PayloadList:       payloads,
 			PreviousNode:      previousNode,
 			CurrentPayloadIdx: 0,
 		}
@@ -56,28 +64,63 @@ func main() {
 	}
 
 	// Traverse
-	node := entryNode
+	var node *PayloadNode = entryNode
 	updatedText := text
-	for node != nil {
-		currentPayload := node.PayloadList[node.CurrentPayloadIdx]
+	for node != nil && !(proceededPayloads == NeedToProceedPayloads) {
 
 		if node.NextNode == nil {
-			// Proceed last payload in Set
+			// Proceed last level payload in Set
 			for _, payload := range node.PayloadList {
 				updatedText = updatedText[:node.Points[0]] + payload + updatedText[node.Points[1]:]
 				node.CurrentPayloadIdx += 1
 				node.Points[1] = node.Points[0] + len(payload)
 
+				/*
+					Send to channel
+					Increment proceeded payload
+				*/
 				fmt.Println(updatedText)
+				proceededPayloads += 1
 			}
 
+			node.CurrentPayloadIdx = 0
+			node = node.PreviousNode
+			node.CurrentPayloadIdx += 1
 			/*
 				Increment previous paylaod index
 				set next node to previous one
 			*/
-			break
+			// break
 		} else {
+			/*
+				IF current payload index == payload list length (IS END)
+				1. set next node to previous one
+				2. reset current payload index
+				3. Incremetn Previous payload index ?
+			*/
+
+			isEndOfCurrentPayloadProcessing := node.CurrentPayloadIdx == len(node.PayloadList)
+			// isLastNode := node.PreviousNode == nil
+
+			// Return back to previous level
+			if isEndOfCurrentPayloadProcessing {
+				node.CurrentPayloadIdx = 0 //
+				node = node.PreviousNode
+				// It's time to nexet payload in list
+				node.CurrentPayloadIdx += 1
+			}
+
+			// isPreviousEmpty := node.PreviousNode == nil
+			// isFullSetProceeded := isPreviousEmpty && isEndOfCurrentPayloadProcessing
+			// IS FUll Payload Set has proceeded
+			// if isFullSetProceeded {
+			// 	fmt.Println("COMPLETED")
+			// 	break
+			// }
+
 			// Proceed top level payload
+			currentPayload := node.PayloadList[node.CurrentPayloadIdx]
+
 			updatedText = updatedText[:node.Points[0]] + currentPayload + updatedText[node.Points[1]:]
 
 			node.Points[1] = node.Points[0] + len(currentPayload)
@@ -90,13 +133,7 @@ func main() {
 			node.WorkingValue = currentPayload
 
 			// node.CurrentPayloadIdx += 1
+			node = node.NextNode
 		}
-
-		/*
-			IF current payload index == payload list length (IS END)
-			1. set next node to previous one
-			2. reset current payload index
-		*/
-		node = node.NextNode
 	}
 }
