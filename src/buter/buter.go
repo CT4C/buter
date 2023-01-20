@@ -29,10 +29,11 @@ type PayloadNode struct {
 and Attack type will operate on top level
 */
 type Config interface {
-	Payloads() [][]string
+	PayloadSet() [][]string
 	Attack() string
 	Url() string
-	MustProceedAmount() int
+	Variants() int
+	Consume(url string)
 }
 
 func Run(config Config) {
