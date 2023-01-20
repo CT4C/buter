@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	rePayloadPosition = regexp.MustCompile("(%[^%]+%)")
+	rePayloadPosition = regexp.MustCompile("(![^!]+!)")
 )
 
 var (
@@ -23,8 +23,20 @@ type PayloadNode struct {
 	PreviousNode      *PayloadNode
 }
 
-func Run(config any) {
-	text := "?param1=%x%&param2=%y%&param3=%z%"
+/*
+- Config includes payloads and url ? Attack Type ?
+- Or it would be Cluster/Sniper instead of Run ?
+and Attack type will operate on top level
+*/
+type Config interface {
+	Payloads() [][]string
+	Attack() string
+	Url() string
+	MustProceedAmount() int
+}
+
+func Run(config Config) {
+	text := "?param1=!x!&param2=!y!&param3=!z!"
 	payload1 := []string{"1", "2"}
 	payload2 := []string{"a", "b", "c"}
 	payload3 := []string{"L", "M", "N", "O"}
