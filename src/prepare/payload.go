@@ -5,7 +5,7 @@ func PreparePayloads(filenames []string) (variants int, payloadSet [][]string, e
 	variants = 1
 
 	for _, filename := range filenames {
-		content, err := ReadFile(filename)
+		content, err := ReadFileByLine(filename)
 		if err != nil {
 			return 0, p, err
 		}

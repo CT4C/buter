@@ -4,23 +4,24 @@ import (
 	"bufio"
 	"io"
 	"os"
+	"strings"
 )
 
-func ReadFiles(files []string) ([][]string, error) {
-	payloads := make([][]string, len(files))
+// func ReadFiles(files []string) ([][]string, error) {
+// 	payloads := make([][]string, len(files))
 
-	for _, filename := range files {
-		content, err := ReadFile(filename)
-		if err != nil {
-			return nil, err
-		}
-		payloads = append(payloads, content)
-	}
+// 	for _, filename := range files {
+// 		content, err := ReadFile(filename)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		payloads = append(payloads, content)
+// 	}
 
-	return payloads, nil
-}
+// 	return payloads, nil
+// }
 
-func ReadFile(filename string) ([]string, error) {
+func ReadFileByLine(filename string) ([]string, error) {
 
 	_, err := os.Stat(filename)
 	if err != nil {
@@ -38,13 +39,15 @@ func ReadFile(filename string) ([]string, error) {
 
 	for {
 		line, err := reader.ReadString('\n')
+		content = append(content, strings.TrimSpace(line))
+
 		if err == io.EOF {
 			break
 		}
+
 		if err != nil {
 			return nil, err
 		}
-		content = append(content, line)
 	}
 
 	return content, nil

@@ -9,7 +9,19 @@
             "request": "launch",
             "type": "go",
             "mode": "auto",
-            "program": "${fileDirname}"
+            "program": "${workspaceFolder}/cmd/buter/main.go",
+            "args": [
+                "-p",
+                "${workspaceFolder}\\mocks\\payload_1.txt",
+                "-p",
+                "${workspaceFolder}\\mocks\\payload_2.txt",
+                "-p",
+                "${workspaceFolder}\\mocks\\payload_3.txt",
+                "-u",
+                "'http://localhost?param1=!abc!&param2=!def!&param3=!ghi!'",
+                "-a",
+                "cluster"
+            ]
         }
     ]
 }

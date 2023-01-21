@@ -1,56 +1,53 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/edpryk/buter/src/buter"
 	"github.com/edpryk/buter/src/docs"
 	"github.com/edpryk/buter/src/prepare"
 )
 
+var (
+	userInput   docs.Input
+	variants    int
+	payloadSet  [][]string
+	config      buter.Config
+	urlProvider buter.UrlProvider
+
+	err error
+)
+
 func main() {
-	userInput := docs.ParseFlags()
-	variants, payloadSet, err := prepare.PreparePayloads(userInput.PayloadFiles)
+
+	userInput = docs.ParseFlags()
+	variants, payloadSet, err = prepare.PreparePayloads(userInput.PayloadFiles)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	config := ButerConfig{
-		url:        userInput.Url,
-		attackType: userInput.AttackType,
-		payloadSet: payloadSet,
-		variants:   variants,
+	rootContext, cancel := context.WithTimeout(context.Background(), time.Duration(10*time.Second))
+	defer cancel()
+
+	config = buter.Config{
+		Url:        userInput.Url,
+		AttackType: userInput.AttackType,
+		PayloadSet: payloadSet,
+		Variants:   variants,
+		Ctx:        rootContext,
 	}
 
-	buter.Run(config)
-}
+	urlProvider, err = buter.Run(config)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
-type ButerConfig struct {
-	attackType string
-	url        string
-	payloadSet [][]string
-	variants   int
-	consumer   chan string
-}
-
-func (bc ButerConfig) Attack() string {
-	return bc.attackType
-}
-
-func (bc ButerConfig) Url() string {
-	return bc.url
-}
-
-func (bc ButerConfig) PayloadSet() [][]string {
-	return ([][]string)(bc.payloadSet)
-}
-
-func (bc ButerConfig) Variants() int {
-	return bc.variants
-}
-
-func (bc ButerConfig) Consume(url string) {
-
+	for url := range urlProvider {
+		fmt.Println(url)
+	}
 }
