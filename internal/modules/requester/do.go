@@ -6,13 +6,11 @@ import (
 )
 
 func Do(method string, url string, headers map[string]string, body io.Reader) (http.Response, error) {
-
 	transport := &http.Transport{}
 
 	client := http.Client{
 		Transport: transport,
 	}
-
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return http.Response{}, err

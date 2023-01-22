@@ -12,13 +12,13 @@
             "program": "${workspaceFolder}/cmd/buter/main.go",
             "args": [
                 "-p",
-                "${workspaceFolder}\\mocks\\payload_1.txt",
+                "${workspaceFolder}\\mocks\\payload_nums.txt",
                 "-p",
-                "${workspaceFolder}\\mocks\\payload_2.txt",
-                "-p",
-                "${workspaceFolder}\\mocks\\payload_3.txt",
+                "${workspaceFolder}\\mocks\\payload_alpha_and_num.txt",
                 "-u",
-                "'http://localhost?param1=!abc!&param2=!def!&param3=!ghi!'",
+                "http: //localhost?param1=!abc!",
+                "-h",
+                "'{ \"x-test\": \"!xxx!\" }'",
                 "-a",
                 "cluster"
             ]

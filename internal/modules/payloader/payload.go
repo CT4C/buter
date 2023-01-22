@@ -1,11 +1,11 @@
-package buter
+package payloader
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/edpryk/buter/src/docs"
+	"github.com/edpryk/buter/internal/docs"
 )
 
 type Attacker interface {
@@ -36,7 +36,7 @@ type Buter struct {
 	startTime        time.Time
 }
 
-func (b *Buter) PrepareAttackValue() error {
+func (b *Buter) PrepareAttack() error {
 	totalPayloads, entryNode, err := transformPayload(b.AttackValue, b.PayloadSet)
 	if err != nil {
 		return err

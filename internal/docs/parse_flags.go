@@ -8,11 +8,12 @@ import (
 )
 
 type Input struct {
-	Url        string
-	AttackType string
-	Headers    string
-	// Headers       map[string]string
+	Url           string
+	AttackType    string
+	Headers       string
 	ThreadsInTime int
+	Delay         int
+
 	PayloadFiles
 }
 
@@ -31,10 +32,12 @@ func ParseFlags() Input {
 	flag.StringVar(&input.Url, urlFlag, defaultUrl, urlUsage)
 	flag.StringVar(&input.AttackType, attackTypeFlag, defaultAttackType, attackTypeUsage)
 	flag.IntVar(&input.ThreadsInTime, threadsFlag, defaultThreads, threadsUseage)
-	// headersStr := flag.String(headersFlag, defaultHeaders, headersUsage)
 	flag.StringVar(&input.Headers, headersFlag, defaultHeaders, headersUsage)
+	flag.IntVar(&input.Delay, delayFlag, defaultDealy, delayUsage)
+
 	flag.Parse()
 
+	fmt.Println(input.Headers)
 	d := make(map[string]string)
 	if err := json.Unmarshal([]byte(input.Headers), &d); err != nil {
 		fmt.Println("Can't parse headers", err)

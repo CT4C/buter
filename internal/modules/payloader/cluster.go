@@ -1,4 +1,4 @@
-package buter
+package payloader
 
 import (
 	"context"
@@ -15,7 +15,7 @@ type Cluster struct {
 
 func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 	/*
-		TODO: Miss when one payload grater the another one
+		TODO: Miss when one payloader grater the another one
 	*/
 	defer close(urlConsumer)
 	defer close(c.errChanel)
@@ -32,14 +32,14 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
 
 		if c.EntryNode.NextNode == nil {
-			// ### Last Level Payload Processing ###
-			for _, payload := range c.EntryNode.PayloadList {
-				updatedText = updatedText[:c.EntryNode.Points[0]] + payload + updatedText[c.EntryNode.Points[1]:]
+			// ### Last Level payloader Processing ###
+			for _, payloader := range c.EntryNode.PayloadList {
+				updatedText = updatedText[:c.EntryNode.Points[0]] + payloader + updatedText[c.EntryNode.Points[1]:]
 				c.EntryNode.CurrentPayloadIdx += 1
-				c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(payload)
+				c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(payloader)
 				/*
 					1. Send to channel
-					2. Increment proceeded payload
+					2. Increment proceeded payloader
 				*/
 				urlConsumer <- updatedText
 				c.proceededPayloads += 1
@@ -56,26 +56,26 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 			// ### TOP level paylaod processing ###
 
 			/*
-				IF current payload index == payload list length (IS END)
+				IF current payloader index == payloader list length (IS END)
 				1. set next c.EntryNode to previous one
-				2. reset current payload index
-				3. Incremetn Previous payload index ?
+				2. reset current payloader index
+				3. Incremetn Previous payloader index ?
 			*/
 
 			isEndOfCurrentPayloadProcessing := c.EntryNode.CurrentPayloadIdx == len(c.EntryNode.PayloadList)
 
 			if isEndOfCurrentPayloadProcessing {
 				/*
-					Reset current payload index before beign go to
+					Reset current payloader index before beign go to
 					the next in set
 				*/
 				c.EntryNode.CurrentPayloadIdx = 0
 				/*
-					Set previous payload to the current one
+					Set previous payloader to the current one
 				*/
 				c.EntryNode = c.EntryNode.PreviousNode
 				/*
-					Increment working payload index
+					Increment working payloader index
 				*/
 				c.EntryNode.CurrentPayloadIdx += 1
 			}
@@ -84,7 +84,7 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 			nextPayload := c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
 
 			/*
-				Points correction - when one payload
+				Points correction - when one payloader
 				length greater then another one
 			*/
 			if len(c.EntryNode.WorkingPayload) < len(nextPayload) {
@@ -103,7 +103,7 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 			*/
 			c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(c.EntryNode.WorkingPayload)
 			/*
-				Defined payload correction, check if it exists yet
+				Defined payloader correction, check if it exists yet
 				found and update points, if it doesn't exists that's
 				mean that all defined pattern already in substitute
 				process wihtin payloads from lists

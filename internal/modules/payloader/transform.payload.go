@@ -1,4 +1,4 @@
-package buter
+package payloader
 
 type PayloadNode struct {
 	Points            [2]int
