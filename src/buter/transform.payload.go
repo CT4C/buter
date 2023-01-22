@@ -1,7 +1,5 @@
 package buter
 
-import "fmt"
-
 type PayloadNode struct {
 	Points            [2]int
 	Number            int
@@ -23,7 +21,6 @@ func transformPayload(text string, payloadSet [][]string) (totalPayloads int, en
 	payloadsAmount := len(payloadSet)
 	totalPayloads = 1
 
-	fmt.Println(text)
 	// Validate payloads and position amount
 	if positionsAmount != payloadsAmount {
 		if positionsAmount < payloadsAmount {

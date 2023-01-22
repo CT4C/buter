@@ -14,6 +14,9 @@ type Cluster struct {
 }
 
 func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
+	/*
+		TODO: Miss when one payload grater the another one
+	*/
 	defer close(urlConsumer)
 	defer close(c.errChanel)
 
@@ -50,6 +53,8 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 			c.EntryNode = c.EntryNode.PreviousNode
 			c.EntryNode.CurrentPayloadIdx += 1
 		} else {
+			// ### TOP level paylaod processing ###
+
 			/*
 				IF current payload index == payload list length (IS END)
 				1. set next c.EntryNode to previous one
@@ -60,18 +65,40 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 			isEndOfCurrentPayloadProcessing := c.EntryNode.CurrentPayloadIdx == len(c.EntryNode.PayloadList)
 
 			if isEndOfCurrentPayloadProcessing {
+				/*
+					Reset current payload index before beign go to
+					the next in set
+				*/
 				c.EntryNode.CurrentPayloadIdx = 0
+				/*
+					Set previous payload to the current one
+				*/
 				c.EntryNode = c.EntryNode.PreviousNode
-				// It's time to nexet payload in list
+				/*
+					Increment working payload index
+				*/
 				c.EntryNode.CurrentPayloadIdx += 1
 			}
 
-			// Proceed top level payload
-			(*c.EntryNode).WorkingPayload = c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
+			nextPayload := c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
+			currentPayload := c.EntryNode.WorkingPayload
+
+			/*
+				Points correction - when one payload
+				length greater then anoher one
+			*/
+			if len(c.EntryNode.WorkingPayload) < len(nextPayload) {
+				nextPointStart := c.EntryNode.NextNode.Points[0]
+				payloadShift := (len(nextPayload) - len(currentPayload))
+				c.EntryNode.NextNode.Points[0] = nextPointStart + payloadShift
+				c.EntryNode.NextNode.Points[1] = nextPointStart + len(nextPayload)
+			}
+
+			c.EntryNode.WorkingPayload = nextPayload
 
 			updatedText = updatedText[:c.EntryNode.Points[0]] + c.EntryNode.WorkingPayload + updatedText[c.EntryNode.Points[1]:]
 
-			(*c.EntryNode).Points[1] = c.EntryNode.Points[0] + len(c.EntryNode.WorkingPayload)
+			c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(c.EntryNode.WorkingPayload)
 
 			positions := rePayloadPosition.FindAllStringSubmatchIndex(updatedText, -1)
 			if len(positions) > 0 {
