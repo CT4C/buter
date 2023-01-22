@@ -32,22 +32,22 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
 
 		if c.EntryNode.NextNode == nil {
-			// Proceed last level payload in Set
+			// ### Last Level Payload Processing ###
 			for _, payload := range c.EntryNode.PayloadList {
 				updatedText = updatedText[:c.EntryNode.Points[0]] + payload + updatedText[c.EntryNode.Points[1]:]
 				c.EntryNode.CurrentPayloadIdx += 1
 				c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(payload)
 				/*
-					- Send to channel
-					- Increment proceeded payload
+					1. Send to channel
+					2. Increment proceeded payload
 				*/
 				urlConsumer <- updatedText
 				c.proceededPayloads += 1
 			}
 
 			/*
-				- Increment previous paylaod index
-				- set next c.EntryNode to previous one
+				1. Increment previous paylaod index
+				2. set next c.EntryNode to previous one
 			*/
 			c.EntryNode.CurrentPayloadIdx = 0
 			c.EntryNode = c.EntryNode.PreviousNode
@@ -80,12 +80,12 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 				c.EntryNode.CurrentPayloadIdx += 1
 			}
 
-			nextPayload := c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
 			currentPayload := c.EntryNode.WorkingPayload
+			nextPayload := c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
 
 			/*
 				Points correction - when one payload
-				length greater then anoher one
+				length greater then another one
 			*/
 			if len(c.EntryNode.WorkingPayload) < len(nextPayload) {
 				nextPointStart := c.EntryNode.NextNode.Points[0]
@@ -98,21 +98,32 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 
 			updatedText = updatedText[:c.EntryNode.Points[0]] + c.EntryNode.WorkingPayload + updatedText[c.EntryNode.Points[1]:]
 
+			/*
+				Current Points correction
+			*/
 			c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(c.EntryNode.WorkingPayload)
-
+			/*
+				Defined payload correction, check if it exists yet
+				found and update points, if it doesn't exists that's
+				mean that all defined pattern already in substitute
+				process wihtin payloads from lists
+			*/
 			positions := rePayloadPosition.FindAllStringSubmatchIndex(updatedText, -1)
 			if len(positions) > 0 {
 				c.EntryNode.NextNode.Points[0] = positions[0][0]
 				c.EntryNode.NextNode.Points[1] = positions[0][1]
 			}
 
+			/*
+				Copy created becuase it was lose fo pointer to the
+				EntryNode
+			*/
 			currentNodeCopy := *c.EntryNode
 			c.EntryNode = c.EntryNode.NextNode
 			c.EntryNode.PreviousNode = &currentNodeCopy
 		}
 	}
 
-	// c.errChanel <- nil
 	return c.errChanel
 }
 
