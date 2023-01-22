@@ -3,70 +3,101 @@ package buter
 import (
 	"context"
 	"fmt"
-	"os"
-	"regexp"
+	"time"
 
 	"github.com/edpryk/buter/src/docs"
 )
 
-var (
-	rePayloadPosition = regexp.MustCompile("(![^!]+!)")
-)
-
-/*
-- Config includes payloads and url ? Attack Type ?
-- Or it would be Cluster/Sniper instead of Run ?
-and Attack type will operate on top level
-*/
-type Config struct {
-	PayloadSet [][]string
-	AttackType string
-	Url        string
-	Variants   int
-	Ctx        context.Context
+type Attacker interface {
+	ProduceUrls(urlConsumer chan string) chan error
+	Proceeded() int
 }
 
-type UrlProvider chan string
+type Config struct {
+	Ctx           context.Context
+	UrlConsumer   chan string
+	PayloadSet    [][]string
+	AttackType    string
+	Url           string
+	TotalPayloads int
+	StatusChan    chan ProcessStatus
+}
 
-func Run(config Config) (UrlProvider, error) {
-	provider := make(UrlProvider)
-	// text := "?param1=!x!&param2=!y!&param3=!z!"
-	// payload1 := []string{"1", "2"}
-	// payload2 := []string{"a", "b", "c"}
-	// payload3 := []string{"L", "M", "N", "O"}
+type ProcessStatus struct {
+	Message string
+	Err     bool
+}
 
-	// payloadsSet := [][]string{payload1, payload2, payload3}
-	entryNode, err := transformPayload(config.Url, config.PayloadSet)
+type Buter struct {
+	Config
+
+	payloadEntryNode *PayloadNode
+	attacker         Attacker
+	startTime        time.Time
+}
+
+func (b *Buter) PrepareAttackUrls() error {
+	totalPayloads, entryNode, err := transformPayload(b.Url, b.PayloadSet)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	b.sendStatus(fmt.Sprintf("[+] Prepared %d payloads\n", totalPayloads), false)
+
+	b.TotalPayloads = totalPayloads
+	b.payloadEntryNode = entryNode
+
+	if err := b.setAttacker(b.AttackType); err != nil {
+		return err
 	}
 
-	ctx, cancel := context.WithCancel(config.Ctx)
-	defer cancel()
-
-	// Validate match length == payloads length
 	go func() {
-		/*
-			- Handling text substitute like Cluster Bobm in Burp Suite
-			- Prepare paylaods set
-		*/
+		defer close(b.StatusChan)
 
-		// go func() {
-		// 	select {
-		// 	case <-ctx.Done():
-		// 		cancel()
-		// 		fmt.Println("Timeout")
-		// 	}
-		// }()
-
-		switch config.AttackType {
-		case docs.ClusterAttack:
-			Cluster(ctx, config.Url, provider, &entryNode)
-		default:
-			fmt.Println(errAttackNotSupported)
-			os.Exit(1)
+		select {
+		case err := <-b.attacker.ProduceUrls(b.UrlConsumer):
+			if err == nil {
+				b.complete()
+			} else {
+				b.sendStatus(err.Error(), true)
+			}
+		case <-b.Ctx.Done():
+			b.terminate()
 		}
 	}()
 
-	return provider, nil
+	return nil
+}
+
+func (b Buter) sendStatus(message string, err bool) {
+	b.StatusChan <- ProcessStatus{
+		Message: message,
+		Err:     err,
+	}
+}
+
+func (b Buter) terminate() {
+	b.sendStatus(fmt.Sprintf("[*] Process timeout, proceeded %d payloads\n", b.attacker.Proceeded()), true)
+}
+
+func (b Buter) complete() {
+	b.sendStatus(fmt.Sprintf("[+] Completed %d paloads in %s\n", b.attacker.Proceeded(), time.Since(b.startTime)), false)
+}
+
+func (b *Buter) setAttacker(attackType string) error {
+	switch attackType {
+	case docs.ClusterAttack:
+		b.attacker = NewCluster(b.Ctx, b.Url, b.payloadEntryNode, b.TotalPayloads)
+		return nil
+	default:
+		return errAttackNotSupported
+	}
+}
+
+func New(config Config) *Buter {
+	b := &Buter{
+		Config:    config,
+		startTime: time.Now(),
+	}
+
+	return b
 }

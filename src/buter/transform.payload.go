@@ -10,34 +10,35 @@ type PayloadNode struct {
 	WorkingPayload    string
 }
 
-var (
-	NeedToProceedPayloads = 1
-	proceededPayloads     = 0
-)
-
-func transformPayload(url string, payloadSet [][]string) (PayloadNode, error) {
+/*
+Transform [][]string to Linked List
+*/
+func transformPayload(url string, payloadSet [][]string) (totalPayloads int, entryNode *PayloadNode, err error) {
 	matchedPositions := rePayloadPosition.FindAllStringSubmatchIndex(url, -1)
 	matchedPatterns := rePayloadPosition.FindAllString(url, -1)
 
 	positionsAmount := len(matchedPositions)
 	payloadsAmount := len(payloadSet)
+	totalPayloads = 1
 
 	// Validate payloads and position amount
 	if positionsAmount != payloadsAmount {
-		p := PayloadNode{}
 		if positionsAmount < payloadsAmount {
-			return p, errLessPositionsThanPayloads
+			err = errLessPositionsThanPayloads
+			return
 		}
 		if payloadsAmount < positionsAmount {
-			return p, errLessPayloadsThanPositions
+			err = errLessPayloadsThanPositions
+			return
 		}
 
-		return p, errPayloadErr
+		return
 	}
 
-	var entryNode, previousNode *PayloadNode
+	var previousNode *PayloadNode
 	for number, payloads := range payloadSet {
-		NeedToProceedPayloads *= len(payloads)
+		totalPayloads *= len(payloads)
+
 		newNode := &PayloadNode{
 			Number:            number,
 			PayloadList:       payloads,
@@ -59,5 +60,5 @@ func transformPayload(url string, payloadSet [][]string) (PayloadNode, error) {
 		}
 	}
 
-	return *entryNode, nil
+	return totalPayloads, entryNode, nil
 }

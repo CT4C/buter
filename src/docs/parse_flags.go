@@ -7,8 +7,9 @@ import (
 )
 
 type Input struct {
-	Url        string
-	AttackType string
+	Url           string
+	AttackType    string
+	ThreadsInTime int
 	PayloadFiles
 }
 
@@ -24,6 +25,7 @@ func ParseFlags() Input {
 	flag.Var(&input.PayloadFiles, payloadFlag, payloadUsage)
 	flag.StringVar(&input.Url, urlFlag, defaultUrl, urlUsage)
 	flag.StringVar(&input.AttackType, attackTypeFlag, defaultAttackType, attackTypeUsage)
+	flag.IntVar(&input.ThreadsInTime, trheadsFlag, defaultThreads, threadsUseage)
 
 	flag.Parse()
 

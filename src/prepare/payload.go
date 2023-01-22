@@ -1,17 +1,17 @@
 package prepare
 
-func PreparePayloads(filenames []string) (variants int, payloadSet [][]string, err error) {
+func PreparePayloads(filenames []string) (totalPayloads int, payloadSet [][]string, err error) {
 	p := make([][]string, 0)
-	variants = 1
+	totalPayloads = 1
 
 	for _, filename := range filenames {
 		content, err := ReadFileByLine(filename)
 		if err != nil {
 			return 0, p, err
 		}
-		variants *= len(content)
+		totalPayloads *= len(content)
 		p = append(p, content)
 	}
 
-	return variants, p, nil
+	return totalPayloads, p, nil
 }

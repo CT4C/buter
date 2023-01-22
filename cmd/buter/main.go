@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -12,11 +13,10 @@ import (
 )
 
 var (
-	userInput   docs.Input
-	variants    int
-	payloadSet  [][]string
-	config      buter.Config
-	urlProvider buter.UrlProvider
+	config        buter.Config
+	userInput     docs.Input
+	payloadSet    [][]string
+	totalPayloads int
 
 	err error
 )
@@ -24,7 +24,7 @@ var (
 func main() {
 
 	userInput = docs.ParseFlags()
-	variants, payloadSet, err = prepare.PreparePayloads(userInput.PayloadFiles)
+	totalPayloads, payloadSet, err = prepare.PreparePayloads(userInput.PayloadFiles)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -33,21 +33,45 @@ func main() {
 	rootContext, cancel := context.WithTimeout(context.Background(), time.Duration(10*time.Second))
 	defer cancel()
 
+	urlConsumer := make(chan string, userInput.ThreadsInTime)
+	statuses := make(chan buter.ProcessStatus, 1)
+
 	config = buter.Config{
-		Url:        userInput.Url,
-		AttackType: userInput.AttackType,
-		PayloadSet: payloadSet,
-		Variants:   variants,
-		Ctx:        rootContext,
+		Url:           userInput.Url,
+		AttackType:    userInput.AttackType,
+		PayloadSet:    payloadSet,
+		TotalPayloads: totalPayloads,
+		Ctx:           rootContext,
+		UrlConsumer:   urlConsumer,
+		StatusChan:    statuses,
 	}
 
-	urlProvider, err = buter.Run(config)
+	Butter := buter.New(config)
+
+	err = Butter.PrepareAttackUrls()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	for url := range urlProvider {
-		fmt.Println(url)
+	go func() {
+		// var wg sync.WaitGroup
+
+		for url := range urlConsumer {
+			// wg.Add(1)
+			// method := "GET"
+
+			fmt.Println(url)
+			// go func(m, u string) {
+			// 	requester.Do(m, u)
+			// }(method, url)
+		}
+	}()
+
+	for status := range statuses {
+		log.Println(status.Message)
+		if status.Err {
+			os.Exit(1)
+		}
 	}
 }

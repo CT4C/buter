@@ -4,71 +4,107 @@ import (
 	"context"
 )
 
-func Cluster(ctx context.Context, url string, provider UrlProvider, payloadNode *PayloadNode) {
-	defer close(provider)
+type Cluster struct {
+	Url               string
+	Ctx               context.Context
+	EntryNode         *PayloadNode
+	TotalPayloads     int
+	proceededPayloads int
+	errChanel         chan error
+}
+
+func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
+	defer close(urlConsumer)
+	defer close(c.errChanel)
+
+	if c.TotalPayloads <= 0 {
+		c.errChanel <- errInvalidTotalPayload
+		return c.errChanel
+	}
 
 	var (
-		updatedText = url
-		// payloadNode        *PayloadNode = &(*payloadNode)
+		updatedUrl = c.Url
 	)
 
-	for payloadNode != nil && !(proceededPayloads == NeedToProceedPayloads) {
+	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
 
-		if payloadNode.NextNode == nil {
+		if c.EntryNode.NextNode == nil {
 			// Proceed last level payload in Set
-			for _, payload := range payloadNode.PayloadList {
-				updatedText = updatedText[:payloadNode.Points[0]] + payload + updatedText[payloadNode.Points[1]:]
-				payloadNode.CurrentPayloadIdx += 1
-				payloadNode.Points[1] = payloadNode.Points[0] + len(payload)
+			for _, payload := range c.EntryNode.PayloadList {
+				updatedUrl = updatedUrl[:c.EntryNode.Points[0]] + payload + updatedUrl[c.EntryNode.Points[1]:]
+				c.EntryNode.CurrentPayloadIdx += 1
+				c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(payload)
 				/*
 					- Send to channel
 					- Increment proceeded payload
 				*/
-				provider <- updatedText
-				proceededPayloads += 1
+				urlConsumer <- updatedUrl
+				c.proceededPayloads += 1
 			}
 
-			payloadNode.CurrentPayloadIdx = 0
-			payloadNode = payloadNode.PreviousNode
-			payloadNode.CurrentPayloadIdx += 1
 			/*
 				- Increment previous paylaod index
-				- set next payloadNode to previous one
+				- set next c.EntryNode to previous one
 			*/
-			// break
+			c.EntryNode.CurrentPayloadIdx = 0
+			c.EntryNode = c.EntryNode.PreviousNode
+			c.EntryNode.CurrentPayloadIdx += 1
 		} else {
 			/*
 				IF current payload index == payload list length (IS END)
-				1. set next payloadNode to previous one
+				1. set next c.EntryNode to previous one
 				2. reset current payload index
 				3. Incremetn Previous payload index ?
 			*/
 
-			isEndOfCurrentPayloadProcessing := payloadNode.CurrentPayloadIdx == len(payloadNode.PayloadList)
+			isEndOfCurrentPayloadProcessing := c.EntryNode.CurrentPayloadIdx == len(c.EntryNode.PayloadList)
 
 			if isEndOfCurrentPayloadProcessing {
-				payloadNode.CurrentPayloadIdx = 0
-				payloadNode = payloadNode.PreviousNode
+				c.EntryNode.CurrentPayloadIdx = 0
+				c.EntryNode = c.EntryNode.PreviousNode
 				// It's time to nexet payload in list
-				payloadNode.CurrentPayloadIdx += 1
+				c.EntryNode.CurrentPayloadIdx += 1
 			}
 
 			// Proceed top level payload
-			(*payloadNode).WorkingPayload = payloadNode.PayloadList[payloadNode.CurrentPayloadIdx]
+			(*c.EntryNode).WorkingPayload = c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
 
-			updatedText = updatedText[:payloadNode.Points[0]] + payloadNode.WorkingPayload + updatedText[payloadNode.Points[1]:]
+			updatedUrl = updatedUrl[:c.EntryNode.Points[0]] + c.EntryNode.WorkingPayload + updatedUrl[c.EntryNode.Points[1]:]
 
-			(*payloadNode).Points[1] = payloadNode.Points[0] + len(payloadNode.WorkingPayload)
+			(*c.EntryNode).Points[1] = c.EntryNode.Points[0] + len(c.EntryNode.WorkingPayload)
 
-			positions := rePayloadPosition.FindAllStringSubmatchIndex(updatedText, -1)
+			positions := rePayloadPosition.FindAllStringSubmatchIndex(updatedUrl, -1)
 			if len(positions) > 0 {
-				payloadNode.NextNode.Points[0] = positions[0][0]
-				payloadNode.NextNode.Points[1] = positions[0][1]
+				c.EntryNode.NextNode.Points[0] = positions[0][0]
+				c.EntryNode.NextNode.Points[1] = positions[0][1]
 			}
 
-			currentNodeCopy := *payloadNode
-			payloadNode = payloadNode.NextNode
-			payloadNode.PreviousNode = &currentNodeCopy
+			currentNodeCopy := *c.EntryNode
+			c.EntryNode = c.EntryNode.NextNode
+			c.EntryNode.PreviousNode = &currentNodeCopy
 		}
+	}
+
+	// c.errChanel <- nil
+	return c.errChanel
+}
+
+func (c Cluster) Proceeded() int {
+	return c.proceededPayloads
+}
+
+func NewCluster(ctx context.Context, url string, entryNode *PayloadNode, totalPyaloads int) *Cluster {
+	return &Cluster{
+		Ctx:           ctx,
+		Url:           url,
+		EntryNode:     entryNode,
+		TotalPayloads: totalPyaloads,
+		/*
+			Using unbuff channles in synchronous code causes deadlock,
+			because runtime is blocked in the place where you send the
+			value to a chnnel, til someone else read the value, but in
+			synchronous code, no one else can't read in the same time
+		*/
+		errChanel: make(chan error, 1),
 	}
 }
