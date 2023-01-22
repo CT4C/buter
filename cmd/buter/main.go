@@ -37,7 +37,7 @@ func main() {
 	rootContext, cancel := context.WithTimeout(context.Background(), time.Duration(10*time.Second))
 	defer cancel()
 
-	paylaodConsumer := make(chan string, userInput.ThreadsInTime)
+	paylaodConsumer := make(chan payloader.CraftedPayload, userInput.ThreadsInTime)
 	statuses := make(chan payloader.ProcessStatus, 1)
 
 	attackValue := userInput.Url + definer.AttackValueSeparator + userInput.Headers
@@ -61,10 +61,10 @@ func main() {
 	}
 
 	go func() {
-		for payload := range paylaodConsumer {
+		for craftedPayload := range paylaodConsumer {
 			wg.Add(1)
 
-			attackValue, err := definer.ParseAttackValues(payload)
+			attackValue, err := definer.ParseAttackValues(craftedPayload.Value)
 			if err != nil {
 				statuses <- payloader.ProcessStatus{
 					Err:     true,
@@ -77,7 +77,7 @@ func main() {
 				Throttle requests
 			*/
 			time.Sleep(time.Duration(userInput.Delay * int(time.Millisecond)))
-			go func(m, u string, h map[string]string) {
+			go func(m, u string, h map[string]string, payload payloader.CraftedPayload) {
 
 				defer wg.Done()
 				reqStartTime := time.Now()
@@ -90,10 +90,15 @@ func main() {
 				/*
 					Need to detect body length
 				*/
+				report := "Time: %-12s Status: %-5d Length: %-5d "
+
+				for number, payloadValue := range payload.Payloads {
+					report += fmt.Sprintf("P_%d: %-5s ", number+1, payloadValue)
+				}
 
 				// Thist must be sent to Reporter channel, another entity reponsibile for printing report
-				fmt.Printf("Status: %-3d Length: %-3d Time: %-3s\n", res.StatusCode, res.ContentLength, time.Since(reqStartTime))
-			}(method, attackValue.Url, attackValue.Headers)
+				fmt.Printf(report+"\n", time.Since(reqStartTime), res.StatusCode, res.ContentLength)
+			}(method, attackValue.Url, attackValue.Headers, craftedPayload)
 		}
 	}()
 

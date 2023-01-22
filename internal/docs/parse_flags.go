@@ -37,7 +37,6 @@ func ParseFlags() Input {
 
 	flag.Parse()
 
-	fmt.Println(input.Headers)
 	d := make(map[string]string)
 	if err := json.Unmarshal([]byte(input.Headers), &d); err != nil {
 		fmt.Println("Can't parse headers", err)

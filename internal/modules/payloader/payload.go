@@ -9,13 +9,18 @@ import (
 )
 
 type Attacker interface {
-	ProduceUrls(urlConsumer chan string) chan error
+	ProduceUrls(urlConsumer chan CraftedPayload) chan error
 	Proceeded() int
+}
+
+type CraftedPayload struct {
+	Value    string
+	Payloads []string
 }
 
 type Config struct {
 	Ctx             context.Context
-	PayloadConsumer chan string
+	PayloadConsumer chan CraftedPayload
 	PayloadSet      [][]string
 	AttackType      string
 	AttackValue     string
@@ -86,7 +91,7 @@ func (b Buter) complete() {
 func (b *Buter) setAttacker(attackType string) error {
 	switch attackType {
 	case docs.ClusterAttack:
-		b.attacker = NewCluster(b.Ctx, b.AttackValue, b.payloadEntryNode, b.TotalPayloads)
+		b.attacker = NewCluster(b.Ctx, b.AttackValue, b.payloadEntryNode, b.TotalPayloads, len(b.PayloadSet))
 		return nil
 	default:
 		return errAttackNotSupported

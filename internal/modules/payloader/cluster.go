@@ -11,9 +11,10 @@ type Cluster struct {
 	TotalPayloads     int
 	proceededPayloads int
 	errChanel         chan error
+	PositionsAmount   int
 }
 
-func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
+func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 	/*
 		TODO: Miss when one payloader grater the another one
 	*/
@@ -26,22 +27,29 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 	}
 
 	var (
-		updatedText = c.AttackValue
+		updatedText        = c.AttackValue
+		workingPayloadsSet = make([]string, c.PositionsAmount)
 	)
 
 	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
 
 		if c.EntryNode.NextNode == nil {
 			// ### Last Level payloader Processing ###
-			for _, payloader := range c.EntryNode.PayloadList {
-				updatedText = updatedText[:c.EntryNode.Points[0]] + payloader + updatedText[c.EntryNode.Points[1]:]
+			for _, payload := range c.EntryNode.PayloadList {
+				workingPayloadsSet[c.EntryNode.Number] = payload
+
+				updatedText = updatedText[:c.EntryNode.Points[0]] + payload + updatedText[c.EntryNode.Points[1]:]
+
 				c.EntryNode.CurrentPayloadIdx += 1
-				c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(payloader)
+				c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(payload)
 				/*
 					1. Send to channel
 					2. Increment proceeded payloader
 				*/
-				urlConsumer <- updatedText
+				urlConsumer <- CraftedPayload{
+					Value:    updatedText,
+					Payloads: workingPayloadsSet,
+				}
 				c.proceededPayloads += 1
 			}
 
@@ -52,6 +60,7 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 			c.EntryNode.CurrentPayloadIdx = 0
 			c.EntryNode = c.EntryNode.PreviousNode
 			c.EntryNode.CurrentPayloadIdx += 1
+			workingPayloadsSet = make([]string, c.PositionsAmount)
 		} else {
 			// ### TOP level paylaod processing ###
 
@@ -115,6 +124,10 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 			}
 
 			/*
+				Added working payload to working payload set
+			*/
+			workingPayloadsSet[c.EntryNode.Number] = c.EntryNode.WorkingPayload
+			/*
 				Copy created becuase it was lose fo pointer to the
 				EntryNode
 			*/
@@ -131,12 +144,13 @@ func (c Cluster) Proceeded() int {
 	return c.proceededPayloads
 }
 
-func NewCluster(ctx context.Context, attackValue string, entryNode *PayloadNode, totalPyaloads int) *Cluster {
+func NewCluster(ctx context.Context, attackValue string, entryNode *PayloadNode, totalPyaloads int, positionsAmount int) *Cluster {
 	return &Cluster{
-		Ctx:           ctx,
-		AttackValue:   attackValue,
-		EntryNode:     entryNode,
-		TotalPayloads: totalPyaloads,
+		Ctx:             ctx,
+		AttackValue:     attackValue,
+		EntryNode:       entryNode,
+		TotalPayloads:   totalPyaloads,
+		PositionsAmount: positionsAmount,
 		/*
 			Using unbuff channles in synchronous code causes deadlock,
 			because runtime is blocked in the place where you send the
