@@ -14,13 +14,13 @@ type Attacker interface {
 }
 
 type Config struct {
-	Ctx           context.Context
-	UrlConsumer   chan string
-	PayloadSet    [][]string
-	AttackType    string
-	Url           string
-	TotalPayloads int
-	StatusChan    chan ProcessStatus
+	Ctx             context.Context
+	PayloadConsumer chan string
+	PayloadSet      [][]string
+	AttackType      string
+	AttackValue     string
+	TotalPayloads   int
+	StatusChan      chan ProcessStatus
 }
 
 type ProcessStatus struct {
@@ -36,8 +36,8 @@ type Buter struct {
 	startTime        time.Time
 }
 
-func (b *Buter) PrepareAttackUrls() error {
-	totalPayloads, entryNode, err := transformPayload(b.Url, b.PayloadSet)
+func (b *Buter) PrepareAttackValue() error {
+	totalPayloads, entryNode, err := transformPayload(b.AttackValue, b.PayloadSet)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (b *Buter) PrepareAttackUrls() error {
 		defer close(b.StatusChan)
 
 		select {
-		case err := <-b.attacker.ProduceUrls(b.UrlConsumer):
+		case err := <-b.attacker.ProduceUrls(b.PayloadConsumer):
 			if err == nil {
 				b.complete()
 			} else {
@@ -86,7 +86,7 @@ func (b Buter) complete() {
 func (b *Buter) setAttacker(attackType string) error {
 	switch attackType {
 	case docs.ClusterAttack:
-		b.attacker = NewCluster(b.Ctx, b.Url, b.payloadEntryNode, b.TotalPayloads)
+		b.attacker = NewCluster(b.Ctx, b.AttackValue, b.payloadEntryNode, b.TotalPayloads)
 		return nil
 	default:
 		return errAttackNotSupported

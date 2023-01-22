@@ -5,7 +5,7 @@ import (
 )
 
 type Cluster struct {
-	Url               string
+	AttackValue       string
 	Ctx               context.Context
 	EntryNode         *PayloadNode
 	TotalPayloads     int
@@ -23,7 +23,7 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 	}
 
 	var (
-		updatedUrl = c.Url
+		updatedText = c.AttackValue
 	)
 
 	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
@@ -31,14 +31,14 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 		if c.EntryNode.NextNode == nil {
 			// Proceed last level payload in Set
 			for _, payload := range c.EntryNode.PayloadList {
-				updatedUrl = updatedUrl[:c.EntryNode.Points[0]] + payload + updatedUrl[c.EntryNode.Points[1]:]
+				updatedText = updatedText[:c.EntryNode.Points[0]] + payload + updatedText[c.EntryNode.Points[1]:]
 				c.EntryNode.CurrentPayloadIdx += 1
 				c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(payload)
 				/*
 					- Send to channel
 					- Increment proceeded payload
 				*/
-				urlConsumer <- updatedUrl
+				urlConsumer <- updatedText
 				c.proceededPayloads += 1
 			}
 
@@ -69,11 +69,11 @@ func (c *Cluster) ProduceUrls(urlConsumer chan string) chan error {
 			// Proceed top level payload
 			(*c.EntryNode).WorkingPayload = c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
 
-			updatedUrl = updatedUrl[:c.EntryNode.Points[0]] + c.EntryNode.WorkingPayload + updatedUrl[c.EntryNode.Points[1]:]
+			updatedText = updatedText[:c.EntryNode.Points[0]] + c.EntryNode.WorkingPayload + updatedText[c.EntryNode.Points[1]:]
 
 			(*c.EntryNode).Points[1] = c.EntryNode.Points[0] + len(c.EntryNode.WorkingPayload)
 
-			positions := rePayloadPosition.FindAllStringSubmatchIndex(updatedUrl, -1)
+			positions := rePayloadPosition.FindAllStringSubmatchIndex(updatedText, -1)
 			if len(positions) > 0 {
 				c.EntryNode.NextNode.Points[0] = positions[0][0]
 				c.EntryNode.NextNode.Points[1] = positions[0][1]
@@ -93,10 +93,10 @@ func (c Cluster) Proceeded() int {
 	return c.proceededPayloads
 }
 
-func NewCluster(ctx context.Context, url string, entryNode *PayloadNode, totalPyaloads int) *Cluster {
+func NewCluster(ctx context.Context, attackValue string, entryNode *PayloadNode, totalPyaloads int) *Cluster {
 	return &Cluster{
 		Ctx:           ctx,
-		Url:           url,
+		AttackValue:   attackValue,
 		EntryNode:     entryNode,
 		TotalPayloads: totalPyaloads,
 		/*

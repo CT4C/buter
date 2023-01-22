@@ -1,5 +1,7 @@
 package buter
 
+import "fmt"
+
 type PayloadNode struct {
 	Points            [2]int
 	Number            int
@@ -13,14 +15,15 @@ type PayloadNode struct {
 /*
 Transform [][]string to Linked List
 */
-func transformPayload(url string, payloadSet [][]string) (totalPayloads int, entryNode *PayloadNode, err error) {
-	matchedPositions := rePayloadPosition.FindAllStringSubmatchIndex(url, -1)
-	matchedPatterns := rePayloadPosition.FindAllString(url, -1)
+func transformPayload(text string, payloadSet [][]string) (totalPayloads int, entryNode *PayloadNode, err error) {
+	matchedPositions := rePayloadPosition.FindAllStringSubmatchIndex(text, -1)
+	matchedPatterns := rePayloadPosition.FindAllString(text, -1)
 
 	positionsAmount := len(matchedPositions)
 	payloadsAmount := len(payloadSet)
 	totalPayloads = 1
 
+	fmt.Println(text)
 	// Validate payloads and position amount
 	if positionsAmount != payloadsAmount {
 		if positionsAmount < payloadsAmount {

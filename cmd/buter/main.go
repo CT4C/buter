@@ -33,22 +33,24 @@ func main() {
 	rootContext, cancel := context.WithTimeout(context.Background(), time.Duration(10*time.Second))
 	defer cancel()
 
-	urlConsumer := make(chan string, userInput.ThreadsInTime)
+	paylaodConsumer := make(chan string, userInput.ThreadsInTime)
 	statuses := make(chan buter.ProcessStatus, 1)
 
+	attackValue := userInput.Url + "," + userInput.Headers
+
 	config = buter.Config{
-		Url:           userInput.Url,
-		AttackType:    userInput.AttackType,
-		PayloadSet:    payloadSet,
-		TotalPayloads: totalPayloads,
-		Ctx:           rootContext,
-		UrlConsumer:   urlConsumer,
-		StatusChan:    statuses,
+		AttackValue:     attackValue,
+		AttackType:      userInput.AttackType,
+		PayloadSet:      payloadSet,
+		TotalPayloads:   totalPayloads,
+		Ctx:             rootContext,
+		PayloadConsumer: paylaodConsumer,
+		StatusChan:      statuses,
 	}
 
 	Butter := buter.New(config)
 
-	err = Butter.PrepareAttackUrls()
+	err = Butter.PrepareAttackValue()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -57,11 +59,11 @@ func main() {
 	go func() {
 		// var wg sync.WaitGroup
 
-		for url := range urlConsumer {
+		for payload := range paylaodConsumer {
 			// wg.Add(1)
 			// method := "GET"
 
-			fmt.Println(url)
+			fmt.Println(payload)
 			// go func(m, u string) {
 			// 	requester.Do(m, u)
 			// }(method, url)
