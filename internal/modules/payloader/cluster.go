@@ -28,7 +28,7 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 
 	var (
 		updatedText        = c.AttackValue
-		workingPayloadsSet = make([]string, c.PositionsAmount)
+		workingPayloadsSet = make([]string, c.PositionsAmount-1)
 	)
 
 	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
@@ -36,7 +36,6 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 		if c.EntryNode.NextNode == nil {
 			// ### Last Level payloader Processing ###
 			for _, payload := range c.EntryNode.PayloadList {
-				workingPayloadsSet[c.EntryNode.Number] = payload
 
 				updatedText = updatedText[:c.EntryNode.Points[0]] + payload + updatedText[c.EntryNode.Points[1]:]
 
@@ -46,10 +45,21 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 					1. Send to channel
 					2. Increment proceeded payloader
 				*/
+				workingPayloadsSet = append(workingPayloadsSet, payload)
+
+				// fmt.Println(1, workingPayloadsSet)
 				urlConsumer <- CraftedPayload{
 					Value:    updatedText,
 					Payloads: workingPayloadsSet,
 				}
+				/*
+					Because in another situatino chanel has a pointer to
+					the workinPayloadSet slice, and last values will change
+					when a clinet will read from consumer
+				*/
+				workingPayloadsSet = workingPayloadsSet[:c.PositionsAmount-1]
+				// fmt.Println(2, workingPayloadsSet)
+
 				c.proceededPayloads += 1
 			}
 
@@ -63,6 +73,7 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 			workingPayloadsSet = make([]string, c.PositionsAmount)
 		} else {
 			// ### TOP level paylaod processing ###
+			workingPayloadsSet[c.EntryNode.Number] = c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
 
 			/*
 				IF current payloader index == payloader list length (IS END)
@@ -126,7 +137,6 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 			/*
 				Added working payload to working payload set
 			*/
-			workingPayloadsSet[c.EntryNode.Number] = c.EntryNode.WorkingPayload
 			/*
 				Copy created becuase it was lose fo pointer to the
 				EntryNode

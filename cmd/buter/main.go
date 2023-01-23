@@ -20,12 +20,41 @@ var (
 	userInput     docs.Input
 	payloadSet    [][]string
 	totalPayloads int
-	wg            sync.WaitGroup
+	wg            = &sync.WaitGroup{}
+	mut           = &sync.Mutex{}
 
 	err error
 )
 
+func doRequest(m, u string, h map[string]string, payload payloader.CraftedPayload) {
+	defer wg.Done()
+	// fmt.Println(payload)
+
+	reqStartTime := time.Now()
+	res, err := requester.Do(m, u, h, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	/*
+		Need to detect body length
+	*/
+	report := "Time: %-12s Status: %-5d Length: %-5d"
+	// URL: %-5s Headers: %s"
+
+	payloadsText := ""
+	for number, payloadValue := range payload.Payloads {
+		payloadsText += fmt.Sprintf("%-3sP_%d: %-5s ", "", number+1, payloadValue)
+	}
+
+	report = payloadsText + report
+
+	// Thist must be sent to Reporter channel, another entity reponsibile for printing report
+	log.Printf(report+"\n", time.Since(reqStartTime), res.StatusCode, res.ContentLength)
+}
+
 func main() {
+	log.SetFlags(2)
 	userInput = docs.ParseFlags()
 	totalPayloads, payloadSet, err = prepare.PreparePayloads(userInput.PayloadFiles)
 	if err != nil {
@@ -60,9 +89,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	ticker := time.NewTicker(time.Duration(userInput.Delay * int(time.Millisecond)))
 	go func() {
 		for craftedPayload := range paylaodConsumer {
-			wg.Add(1)
+			// fmt.Println(555, craftedPayload)
 
 			attackValue, err := definer.ParseAttackValues(craftedPayload.Value)
 			if err != nil {
@@ -73,32 +103,9 @@ func main() {
 				continue
 			}
 
-			/*
-				Throttle requests
-			*/
-			time.Sleep(time.Duration(userInput.Delay * int(time.Millisecond)))
-			go func(m, u string, h map[string]string, payload payloader.CraftedPayload) {
-
-				defer wg.Done()
-				reqStartTime := time.Now()
-
-				res, err := requester.Do(m, u, h, nil)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				/*
-					Need to detect body length
-				*/
-				report := "Time: %-12s Status: %-5d Length: %-5d "
-
-				for number, payloadValue := range payload.Payloads {
-					report += fmt.Sprintf("P_%d: %-5s ", number+1, payloadValue)
-				}
-
-				// Thist must be sent to Reporter channel, another entity reponsibile for printing report
-				fmt.Printf(report+"\n", time.Since(reqStartTime), res.StatusCode, res.ContentLength)
-			}(method, attackValue.Url, attackValue.Headers, craftedPayload)
+			wg.Add(1)
+			go doRequest(method, attackValue.Url, attackValue.Headers, craftedPayload)
+			<-ticker.C
 		}
 	}()
 
@@ -110,4 +117,5 @@ func main() {
 	}
 
 	wg.Wait()
+	ticker.Stop()
 }

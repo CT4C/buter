@@ -22,7 +22,7 @@ var (
 
 	defaultAttackType = ""
 	defaultUrl        = ""
-	defaultThreads    = 10
+	defaultThreads    = 3
 	defaultHeaders    = ""
 	defaultDealy      = 800
 )
