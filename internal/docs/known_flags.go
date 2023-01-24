@@ -14,13 +14,13 @@ var (
 	delayFlag      = "d"
 	methodFlag     = "m"
 
-	urlUsage        = "(Url) -u <http://localhost?param1=!abc!&param_N=!efg!> (payload wrapped into '!' char)"
-	payloadUsage    = "(Payload) -p <payload-file_1> -p <payload-file_N>"
-	attackTypeUsage = fmt.Sprintf("(AttackType) %10s <%s>", "-a", strings.Join([]string{ClusterAttack}, "/"))
-	threadsUsage    = "(Max Concurrent Threads) -t 5"
-	headersUsage    = "(Headers) -h '{ \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/99.1\" }'"
-	delayUsage      = fmt.Sprintf("(Delay In Milliseconds)%10s", "-d 800 ")
-	methodUsage     = fmt.Sprintf("(Method)%10s", "-m get")
+	urlUsage        = "-u <http://localhost?param1=!abc!&param_N=!efg!> (payload wrapped into '!' char) (Url) "
+	payloadUsage    = "-p <payload-file_1> -p <payload-file_N> (Payload)"
+	attackTypeUsage = fmt.Sprintf("%s <%s> (AttackType)", "-a", strings.Join([]string{ClusterAttack}, "/"))
+	threadsUsage    = "-t 5 (Max Concurrent Threads) "
+	headersUsage    = "-h '{ \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/99.1\" }' (Headers) "
+	delayUsage      = fmt.Sprintf("%s (Delay In Milliseconds)", "-d 800 ")
+	methodUsage     = fmt.Sprintf("%s (Method)", "-m get")
 
 	defaultAttackType = ""
 	defaultUrl        = ""
