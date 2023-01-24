@@ -11,6 +11,7 @@ import (
 	"github.com/edpryk/buter/internal/docs"
 	"github.com/edpryk/buter/internal/helpers/prepare"
 	"github.com/edpryk/buter/internal/modules/payloader"
+	"github.com/edpryk/buter/internal/modules/reporter"
 	"github.com/edpryk/buter/internal/modules/requester"
 )
 
@@ -68,6 +69,7 @@ func main() {
 	})
 
 	consumer, provider, _ := requetsQueue.StartWorker()
+	reporter := reporter.New()
 
 	wg.Add(1)
 	go func() {
@@ -75,10 +77,11 @@ func main() {
 
 		for craftedPayload := range paylaodConsumer {
 			consumer <- requester.ReuqestParameters{
-				Method: userInput.Method,
-				Url:    craftedPayload.Url,
-				Header: craftedPayload.Headers,
-				Body:   nil,
+				Method:   userInput.Method,
+				Url:      craftedPayload.Url,
+				Header:   craftedPayload.Headers,
+				Body:     nil,
+				Payloads: craftedPayload.Payloads,
 			}
 
 			<-ticker.C
@@ -87,16 +90,14 @@ func main() {
 		close(consumer)
 	}()
 
-	for res := range provider {
-		fmt.Println(res.StatusCode, res.Request.URL)
-	}
+	reporter.ListenReponse(provider, nil)
 
-	for status := range statuses {
-		log.Println(status.Message)
-		if status.Err {
-			os.Exit(1)
-		}
-	}
+	// for status := range statuses {
+	// 	log.Println(status.Message)
+	// 	if status.Err {
+	// 		os.Exit(1)
+	// 	}
+	// }
 
 	wg.Wait()
 	ticker.Stop()
