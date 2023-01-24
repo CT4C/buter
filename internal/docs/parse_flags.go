@@ -19,10 +19,10 @@ type Input struct {
 }
 
 /*
-Parse flgas validate it
-and eather return it or
-pritn an error and usage
-and exis process
+Parse flags validate it
+and either return it or
+print an error and usage
+and exits process
 */
 func ParseFlags() Input {
 	input := Input{}
@@ -31,20 +31,23 @@ func ParseFlags() Input {
 	flag.StringVar(&input.Url, urlFlag, defaultUrl, urlUsage)
 	flag.StringVar(&input.Method, methodFlag, defaultMethod, methodUsage)
 	flag.StringVar(&input.AttackType, attackTypeFlag, defaultAttackType, attackTypeUsage)
-	flag.IntVar(&input.MaxConcurrent, threadsFlag, defaultThreads, threadsUseage)
+	flag.IntVar(&input.MaxConcurrent, threadsFlag, defaultThreads, threadsUsage)
 	flag.StringVar(&input.Headers, headersFlag, defaultHeaders, headersUsage)
 	flag.IntVar(&input.Delay, delayFlag, defaultDealy, delayUsage)
 
 	flag.Parse()
 
-	d := make(map[string]string)
-	if err := json.Unmarshal([]byte(input.Headers), &d); err != nil {
-		fmt.Println("Can't parse headers", err)
-		os.Exit(1)
-	}
-	b, _ := json.Marshal(d)
+	if len(input.Headers) > 0 {
+		d := make(map[string]string)
 
-	input.Headers = string(b)
+		if err := json.Unmarshal([]byte(input.Headers), &d); err != nil {
+			fmt.Println("Can't parse headers", err)
+			os.Exit(1)
+		}
+		b, _ := json.Marshal(d)
+
+		input.Headers = string(b)
+	}
 
 	if err := validateInput(input); err != nil {
 		fmt.Println(err.Error())
