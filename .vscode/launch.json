@@ -16,11 +16,13 @@
                 "-p",
                 "${workspaceFolder}\\mocks\\payload_alpha_and_num.txt",
                 "-u",
-                "http://localhost:4000?param1=!abc!",
+                "http://0.0.0.0:4000?param1=!abc!",
                 "-h",
                 "{ \"x-test\": \"!xxx!\" }",
                 "-a",
-                "cluster"
+                "cluster",
+                "-d",
+                "800"
             ]
         }
     ]

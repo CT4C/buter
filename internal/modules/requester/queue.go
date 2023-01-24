@@ -1,10 +1,10 @@
 package requester
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/edpryk/buter/internal/modules/stability"
 )
@@ -21,29 +21,42 @@ type RequestQueueConfig struct {
 	RetryDelay            int
 }
 
+type CustomResponse struct {
+	Duration time.Duration
+	Payloads []string
+	http.Response
+}
+
 type ReuqestParameters struct {
-	Method string
-	Url    string
-	Header map[string]string
-	Body   io.Reader
+	Method   string
+	Url      string
+	Header   map[string]string
+	Body     io.Reader
+	Payloads []string
 }
 
 type RequestQueue struct {
 	receiveQueue   chan ReuqestParameters
-	sendQueue      chan http.Response
+	sendQueue      chan CustomResponse
 	errQueue       chan error
-	requestCounter *stability.Counter
-	wg             *sync.WaitGroup
-	block          chan int
+	spawnedThreads *stability.Counter
+	// spawnedRequets *stability.Counter
 
+	wg    *sync.WaitGroup
+	block chan int
+
+	CloseSig chan int
 	RequestQueueConfig
 }
 
-func (rq *RequestQueue) StartWorker() (consumer chan ReuqestParameters, provider chan http.Response, errQ chan error) {
+func (rq *RequestQueue) StartWorker() (consumer chan ReuqestParameters, provider chan CustomResponse, errQ chan error) {
 	go func() {
 		for requestParameter := range rq.receiveQueue {
-			defer rq.requestCounter.Increment()
-			fmt.Println(len(rq.receiveQueue))
+			// Blocking more than N threads per period ?
+			if (rq.spawnedThreads.Number()) >= rq.MaxConcurrentRequests {
+				<-rq.block
+			}
+
 			requst := func() (any, error) {
 				return Do(
 					requestParameter.Method,
@@ -54,24 +67,33 @@ func (rq *RequestQueue) StartWorker() (consumer chan ReuqestParameters, provider
 			}
 
 			rq.wg.Add(1)
-			go func() {
+			rq.spawnedThreads.Increment()
+			go func(params ReuqestParameters) {
 				defer rq.wg.Done()
-				// <-rq.block
+				defer func() {
+					// Unblock receiving
+					if rq.spawnedThreads.Number() <= 0 {
+						rq.block <- 0
+					}
+				}()
+				defer rq.spawnedThreads.Decrement()
 
+				startTime := time.Now()
 				res, err := stability.Retry(requst, rq.Retries, rq.RetryDelay)
 				if err != nil {
 					rq.errQueue <- err
 				} else {
-					rq.sendQueue <- res.(http.Response)
+					rq.sendQueue <- CustomResponse{
+						Response: res.(http.Response),
+						Duration: time.Since(startTime),
+						Payloads: params.Payloads,
+					}
 				}
-			}()
-
-			// if (rq.requestCounter.Number() % rq.MaxConcurrentRequests) == 0 {
-			// 	rq.block <- 0
-			// }
+			}(requestParameter)
 		}
 
 		rq.wg.Wait()
+		close(rq.sendQueue)
 	}()
 
 	return rq.receiveQueue, rq.sendQueue, rq.errQueue
@@ -80,11 +102,12 @@ func (rq *RequestQueue) StartWorker() (consumer chan ReuqestParameters, provider
 func NewRequestQueue(config RequestQueueConfig) *RequestQueue {
 	return &RequestQueue{
 		receiveQueue:   make(chan ReuqestParameters, config.MaxConcurrentRequests),
-		sendQueue:      make(chan http.Response, config.MaxConcurrentRequests),
+		sendQueue:      make(chan CustomResponse, config.MaxConcurrentRequests),
 		errQueue:       make(chan error, config.MaxConcurrentRequests),
-		requestCounter: stability.NewCounter(),
-		wg:             &sync.WaitGroup{},
-		block:          make(chan int),
+		spawnedThreads: stability.NewCounter(),
+		// spawnedRequets: stability.NewCounter(),
+		wg:    &sync.WaitGroup{},
+		block: make(chan int),
 
 		RequestQueueConfig: config,
 	}

@@ -52,5 +52,9 @@ func ParseFlags() Input {
 		os.Exit(1)
 	}
 
+	if input.Delay <= 0 {
+		input.Delay = 1
+	}
+
 	return input
 }
