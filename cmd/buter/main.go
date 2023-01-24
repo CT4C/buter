@@ -34,7 +34,6 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	method := "get"
 
 	rootContext, cancel := context.WithTimeout(context.Background(), time.Duration(10*time.Second))
 	defer cancel()
@@ -76,7 +75,7 @@ func main() {
 
 		for craftedPayload := range paylaodConsumer {
 			consumer <- requester.ReuqestParameters{
-				Method: method,
+				Method: userInput.Method,
 				Url:    craftedPayload.Url,
 				Header: craftedPayload.Headers,
 				Body:   nil,

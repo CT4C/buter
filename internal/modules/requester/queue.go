@@ -1,6 +1,7 @@
 package requester
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -33,6 +34,7 @@ type RequestQueue struct {
 	errQueue       chan error
 	requestCounter *stability.Counter
 	wg             *sync.WaitGroup
+	block          chan int
 
 	RequestQueueConfig
 }
@@ -41,7 +43,7 @@ func (rq *RequestQueue) StartWorker() (consumer chan ReuqestParameters, provider
 	go func() {
 		for requestParameter := range rq.receiveQueue {
 			defer rq.requestCounter.Increment()
-
+			fmt.Println(len(rq.receiveQueue))
 			requst := func() (any, error) {
 				return Do(
 					requestParameter.Method,
@@ -54,6 +56,7 @@ func (rq *RequestQueue) StartWorker() (consumer chan ReuqestParameters, provider
 			rq.wg.Add(1)
 			go func() {
 				defer rq.wg.Done()
+				// <-rq.block
 
 				res, err := stability.Retry(requst, rq.Retries, rq.RetryDelay)
 				if err != nil {
@@ -62,6 +65,10 @@ func (rq *RequestQueue) StartWorker() (consumer chan ReuqestParameters, provider
 					rq.sendQueue <- res.(http.Response)
 				}
 			}()
+
+			// if (rq.requestCounter.Number() % rq.MaxConcurrentRequests) == 0 {
+			// 	rq.block <- 0
+			// }
 		}
 
 		rq.wg.Wait()
@@ -77,6 +84,7 @@ func NewRequestQueue(config RequestQueueConfig) *RequestQueue {
 		errQueue:       make(chan error, config.MaxConcurrentRequests),
 		requestCounter: stability.NewCounter(),
 		wg:             &sync.WaitGroup{},
+		block:          make(chan int),
 
 		RequestQueueConfig: config,
 	}
