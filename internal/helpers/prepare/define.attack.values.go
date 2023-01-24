@@ -1,4 +1,4 @@
-package definer
+package prepare
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ type AttackValue struct {
 	Headers map[string]string
 }
 
-func ParseAttackValues(value string) (AttackValue, error) {
+func ParseAttackValue(value string) (AttackValue, error) {
 	attackValue := AttackValue{
 		Headers: make(map[string]string),
 	}

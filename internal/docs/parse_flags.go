@@ -11,7 +11,7 @@ type Input struct {
 	Url           string
 	AttackType    string
 	Headers       string
-	ThreadsInTime int
+	MaxConcurrent int
 	Delay         int
 
 	PayloadFiles
@@ -31,7 +31,7 @@ func ParseFlags() Input {
 	flag.Var(&input.PayloadFiles, payloadFlag, payloadUsage)
 	flag.StringVar(&input.Url, urlFlag, defaultUrl, urlUsage)
 	flag.StringVar(&input.AttackType, attackTypeFlag, defaultAttackType, attackTypeUsage)
-	flag.IntVar(&input.ThreadsInTime, threadsFlag, defaultThreads, threadsUseage)
+	flag.IntVar(&input.MaxConcurrent, threadsFlag, defaultThreads, threadsUseage)
 	flag.StringVar(&input.Headers, headersFlag, defaultHeaders, headersUsage)
 	flag.IntVar(&input.Delay, delayFlag, defaultDealy, delayUsage)
 

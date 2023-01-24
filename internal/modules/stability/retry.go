@@ -1,4 +1,4 @@
-package stabilizator
+package stability
 
 import "time"
 

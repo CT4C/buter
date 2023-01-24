@@ -14,8 +14,9 @@ type Attacker interface {
 }
 
 type CraftedPayload struct {
-	Value    string
+	Url      string
 	Payloads []string
+	Headers  map[string]string
 }
 
 type Config struct {
