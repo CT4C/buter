@@ -2,6 +2,8 @@ package payloader
 
 import (
 	"context"
+
+	"github.com/edpryk/buter/internal/helpers/prepare"
 )
 
 type Cluster struct {
@@ -27,7 +29,7 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 	}
 
 	var (
-		updatedText        = c.AttackValue
+		updatedAttackValue = c.AttackValue
 		workingPayloadsSet = make([]string, c.PositionsAmount)
 	)
 
@@ -38,17 +40,28 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 			for _, payload := range c.EntryNode.PayloadList {
 				workingPayloadsSet[c.EntryNode.Number] = payload
 
-				updatedText = updatedText[:c.EntryNode.Points[0]] + payload + updatedText[c.EntryNode.Points[1]:]
+				updatedAttackValue = updatedAttackValue[:c.EntryNode.Points[0]] + payload + updatedAttackValue[c.EntryNode.Points[1]:]
 
 				c.EntryNode.CurrentPayloadIdx += 1
 				c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(payload)
 				/*
+					Because in another situatino chanel has a pointer to
+					the workinPayloadSet slice, and last values will change
+					when a clinet will read from consumer
+				*/
+				workinPayloadCopy := make([]string, len(workingPayloadsSet))
+				copy(workinPayloadCopy, workingPayloadsSet)
+
+				/*
 					1. Send to channel
 					2. Increment proceeded payloader
 				*/
+				parsedAttackValue, _ := prepare.ParseAttackValue(updatedAttackValue)
+
 				urlConsumer <- CraftedPayload{
-					Value:    updatedText,
-					Payloads: workingPayloadsSet,
+					Url:      parsedAttackValue.Url,
+					Headers:  parsedAttackValue.Headers,
+					Payloads: workinPayloadCopy,
 				}
 				c.proceededPayloads += 1
 			}
@@ -63,6 +76,7 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 			workingPayloadsSet = make([]string, c.PositionsAmount)
 		} else {
 			// ### TOP level paylaod processing ###
+			workingPayloadsSet[c.EntryNode.Number] = c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
 
 			/*
 				IF current payloader index == payloader list length (IS END)
@@ -105,7 +119,7 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 
 			c.EntryNode.WorkingPayload = nextPayload
 
-			updatedText = updatedText[:c.EntryNode.Points[0]] + c.EntryNode.WorkingPayload + updatedText[c.EntryNode.Points[1]:]
+			updatedAttackValue = updatedAttackValue[:c.EntryNode.Points[0]] + c.EntryNode.WorkingPayload + updatedAttackValue[c.EntryNode.Points[1]:]
 
 			/*
 				Current Points correction
@@ -117,7 +131,7 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 				mean that all defined pattern already in substitute
 				process wihtin payloads from lists
 			*/
-			positions := rePayloadPosition.FindAllStringSubmatchIndex(updatedText, -1)
+			positions := rePayloadPosition.FindAllStringSubmatchIndex(updatedAttackValue, -1)
 			if len(positions) > 0 {
 				c.EntryNode.NextNode.Points[0] = positions[0][0]
 				c.EntryNode.NextNode.Points[1] = positions[0][1]
@@ -126,7 +140,6 @@ func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
 			/*
 				Added working payload to working payload set
 			*/
-			workingPayloadsSet[c.EntryNode.Number] = c.EntryNode.WorkingPayload
 			/*
 				Copy created becuase it was lose fo pointer to the
 				EntryNode

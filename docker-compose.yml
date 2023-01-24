@@ -1,0 +1,7 @@
+version: '3.5'
+
+services:
+  test-server:
+    image: nginx:alpine
+    ports:
+      - "4000:80"

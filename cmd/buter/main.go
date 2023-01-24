@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/edpryk/buter/internal/docs"
-	"github.com/edpryk/buter/internal/helpers/definer"
 	"github.com/edpryk/buter/internal/helpers/prepare"
 	"github.com/edpryk/buter/internal/modules/payloader"
 	"github.com/edpryk/buter/internal/modules/requester"
@@ -20,27 +19,29 @@ var (
 	userInput     docs.Input
 	payloadSet    [][]string
 	totalPayloads int
-	wg            sync.WaitGroup
+	wg            = &sync.WaitGroup{}
+	mut           = &sync.Mutex{}
 
 	err error
 )
 
 func main() {
+	log.SetFlags(2)
+
 	userInput = docs.ParseFlags()
 	totalPayloads, payloadSet, err = prepare.PreparePayloads(userInput.PayloadFiles)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	method := "get"
 
 	rootContext, cancel := context.WithTimeout(context.Background(), time.Duration(10*time.Second))
 	defer cancel()
 
-	paylaodConsumer := make(chan payloader.CraftedPayload, userInput.ThreadsInTime)
+	paylaodConsumer := make(chan payloader.CraftedPayload, userInput.MaxConcurrent)
 	statuses := make(chan payloader.ProcessStatus, 1)
 
-	attackValue := userInput.Url + definer.AttackValueSeparator + userInput.Headers
+	attackValue := userInput.Url + prepare.AttackValueSeparator + userInput.Headers
 
 	config = payloader.Config{
 		AttackValue:     attackValue,
@@ -60,47 +61,35 @@ func main() {
 		os.Exit(1)
 	}
 
-	go func() {
-		for craftedPayload := range paylaodConsumer {
-			wg.Add(1)
+	ticker := time.NewTicker(time.Duration(userInput.Delay * int(time.Millisecond)))
 
-			attackValue, err := definer.ParseAttackValues(craftedPayload.Value)
-			if err != nil {
-				statuses <- payloader.ProcessStatus{
-					Err:     true,
-					Message: err.Error(),
-				}
-				continue
+	requetsQueue := requester.NewRequestQueue(requester.RequestQueueConfig{
+		MaxConcurrentRequests: userInput.MaxConcurrent,
+	})
+
+	consumer, provider, _ := requetsQueue.StartWorker()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for craftedPayload := range paylaodConsumer {
+			consumer <- requester.ReuqestParameters{
+				Method: userInput.Method,
+				Url:    craftedPayload.Url,
+				Header: craftedPayload.Headers,
+				Body:   nil,
 			}
 
-			/*
-				Throttle requests
-			*/
-			time.Sleep(time.Duration(userInput.Delay * int(time.Millisecond)))
-			go func(m, u string, h map[string]string, payload payloader.CraftedPayload) {
-
-				defer wg.Done()
-				reqStartTime := time.Now()
-
-				res, err := requester.Do(m, u, h, nil)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				/*
-					Need to detect body length
-				*/
-				report := "Time: %-12s Status: %-5d Length: %-5d "
-
-				for number, payloadValue := range payload.Payloads {
-					report += fmt.Sprintf("P_%d: %-5s ", number+1, payloadValue)
-				}
-
-				// Thist must be sent to Reporter channel, another entity reponsibile for printing report
-				fmt.Printf(report+"\n", time.Since(reqStartTime), res.StatusCode, res.ContentLength)
-			}(method, attackValue.Url, attackValue.Headers, craftedPayload)
+			<-ticker.C
 		}
+
+		close(consumer)
 	}()
+
+	for res := range provider {
+		fmt.Println(res.StatusCode, res.Request.URL)
+	}
 
 	for status := range statuses {
 		log.Println(status.Message)
@@ -110,4 +99,5 @@ func main() {
 	}
 
 	wg.Wait()
+	ticker.Stop()
 }
