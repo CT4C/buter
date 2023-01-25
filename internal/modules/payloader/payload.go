@@ -3,13 +3,14 @@ package payloader
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
-	"github.com/edpryk/buter/internal/docs"
+	"github.com/edpryk/buter/cli"
 )
 
 type Attacker interface {
-	ProduceUrls(urlConsumer chan CraftedPayload) chan error
+	ProducePayload(urlConsumer chan CraftedPayload) chan error
 	Proceeded() int
 }
 
@@ -20,13 +21,12 @@ type CraftedPayload struct {
 }
 
 type Config struct {
-	Ctx             context.Context
-	PayloadConsumer chan CraftedPayload
-	PayloadSet      [][]string
-	AttackType      string
-	AttackValue     string
-	TotalPayloads   int
-	StatusChan      chan ProcessStatus
+	Ctx           context.Context
+	PayloadSet    [][]string
+	AttackType    string
+	AttackValue   string
+	TotalPayloads int
+	QueueLength   int
 }
 
 type ProcessStatus struct {
@@ -40,58 +40,50 @@ type Buter struct {
 	payloadEntryNode *PayloadNode
 	attacker         Attacker
 	startTime        time.Time
+	payloadProvider  chan CraftedPayload
+	errQ             chan error
 }
 
-func (b *Buter) PrepareAttack() error {
-	totalPayloads, entryNode, err := transformPayload(b.AttackValue, b.PayloadSet)
-	if err != nil {
-		return err
-	}
-	b.sendStatus(fmt.Sprintf("[+] Prepared %d payloads\n", totalPayloads), false)
-
-	b.TotalPayloads = totalPayloads
-	b.payloadEntryNode = entryNode
-
-	if err := b.setAttacker(b.AttackType); err != nil {
-		return err
-	}
-
+func (b *Buter) PrepareAttack() (payloadPrivider chan CraftedPayload, err chan error) {
 	go func() {
-		defer close(b.StatusChan)
+		defer close(b.errQ)
 
-		select {
-		case err := <-b.attacker.ProduceUrls(b.PayloadConsumer):
-			if err == nil {
-				b.complete()
-			} else {
-				b.sendStatus(err.Error(), true)
-			}
-		case <-b.Ctx.Done():
-			b.terminate()
+		totalPayloads, entryNode, err := transformPayload(b.AttackValue, b.PayloadSet)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
+		b.TotalPayloads = totalPayloads
+		b.payloadEntryNode = entryNode
+
+		if err := b.setAttacker(b.AttackType); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		go func() {
+			defer close(b.payloadProvider)
+
+			select {
+			case err := <-b.attacker.ProducePayload(b.payloadProvider):
+				if err != nil {
+					fmt.Println(err)
+					b.errQ <- err
+				}
+
+				return
+			case <-b.Ctx.Done():
+				return
+			}
+		}()
 	}()
 
-	return nil
-}
-
-func (b Buter) sendStatus(message string, err bool) {
-	b.StatusChan <- ProcessStatus{
-		Message: message,
-		Err:     err,
-	}
-}
-
-func (b Buter) terminate() {
-	b.sendStatus(fmt.Sprintf("[*] Process timeout, proceeded %d payloads\n", b.attacker.Proceeded()), true)
-}
-
-func (b Buter) complete() {
-	b.sendStatus(fmt.Sprintf("[+] Completed %d paloads in %s\n", b.attacker.Proceeded(), time.Since(b.startTime)), false)
+	return b.payloadProvider, b.errQ
 }
 
 func (b *Buter) setAttacker(attackType string) error {
 	switch attackType {
-	case docs.ClusterAttack:
+	case cli.ClusterAttack:
 		b.attacker = NewCluster(b.Ctx, b.AttackValue, b.payloadEntryNode, b.TotalPayloads, len(b.PayloadSet))
 		return nil
 	default:
@@ -100,9 +92,15 @@ func (b *Buter) setAttacker(attackType string) error {
 }
 
 func New(config Config) *Buter {
+	if config.QueueLength == 0 {
+		config.QueueLength = 1
+	}
+
 	b := &Buter{
-		Config:    config,
-		startTime: time.Now(),
+		Config:          config,
+		startTime:       time.Now(),
+		payloadProvider: make(chan CraftedPayload, config.QueueLength),
+		errQ:            make(chan error, 1),
 	}
 
 	return b

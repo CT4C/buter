@@ -16,7 +16,6 @@ Transform [][]string to Linked List
 func transformPayload(text string, payloadSet [][]string) (totalPayloads int, entryNode *PayloadNode, err error) {
 	matchedPositions := rePayloadPosition.FindAllStringSubmatchIndex(text, -1)
 	matchedPatterns := rePayloadPosition.FindAllString(text, -1)
-
 	positionsAmount := len(matchedPositions)
 	payloadsAmount := len(payloadSet)
 	totalPayloads = 1

@@ -9,7 +9,7 @@
             "request": "launch",
             "type": "go",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/buter/main.go",
+            "program": "${workspaceFolder}/main.go",
             "args": [
                 "-p",
                 "${workspaceFolder}\\mocks\\payload_nums.txt",

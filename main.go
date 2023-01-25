@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/edpryk/buter/internal/docs"
+	"github.com/edpryk/buter/cli"
 	"github.com/edpryk/buter/internal/helpers/prepare"
 	"github.com/edpryk/buter/internal/modules/payloader"
 	"github.com/edpryk/buter/internal/modules/reporter"
@@ -18,7 +18,7 @@ import (
 
 var (
 	config        payloader.Config
-	userInput     docs.Input
+	userInput     cli.Input
 	payloadSet    [][]string
 	totalPayloads int
 	wg            = &sync.WaitGroup{}
@@ -34,7 +34,7 @@ func main() {
 		Need to test target connection before start
 	*/
 
-	userInput = docs.ParseFlags()
+	userInput = cli.ParseFlags()
 	totalPayloads, payloadSet, err = prepare.PreparePayloads(userInput.PayloadFiles)
 	if err != nil {
 		fmt.Println(err)
@@ -44,27 +44,21 @@ func main() {
 	rootContext, cancel := context.WithTimeout(context.Background(), time.Duration(10*time.Second))
 	defer cancel()
 
-	paylaodConsumer := make(chan payloader.CraftedPayload, userInput.MaxConcurrent)
-	statuses := make(chan payloader.ProcessStatus, 1)
-
-	attackValue := userInput.Url + prepare.AttackValueSeparator + userInput.Headers
+	attackValue := userInput.Url + prepare.AttackValueSeparator + userInput.Headers.String()
 
 	Payloader := payloader.New(payloader.Config{
-		AttackValue:     attackValue,
-		AttackType:      userInput.AttackType,
-		PayloadSet:      payloadSet,
-		TotalPayloads:   totalPayloads,
-		Ctx:             rootContext,
-		PayloadConsumer: paylaodConsumer,
-		StatusChan:      statuses,
+		AttackValue:   attackValue,
+		AttackType:    userInput.AttackType,
+		PayloadSet:    payloadSet,
+		TotalPayloads: totalPayloads,
+		Ctx:           rootContext,
 	})
 
-	// Return payload provider instead of passing payloadConsumer
-	err = Payloader.PrepareAttack()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	payloadProvider, _ := Payloader.PrepareAttack()
+	// if err != <-errQ {
+	// 	fmt.Println(err)
+	// 	os.Exit(1)
+	// }
 
 	queueWorker := requester.NewRequestQueue(requester.QueueWorkerConfig{
 		MaxConcurrentRequests: userInput.MaxConcurrent,
@@ -81,14 +75,14 @@ func main() {
 		defer wg.Done()
 
 		transport.MutableTransit(
-			paylaodConsumer,
+			payloadProvider,
 			requestConsumer,
-			func(original payloader.CraftedPayload) requester.ReuqestParameters {
+			func(srcValue payloader.CraftedPayload) requester.ReuqestParameters {
 				return requester.ReuqestParameters{
-					Url:      original.Url,
+					Url:      srcValue.Url,
 					Method:   userInput.Method,
-					Header:   original.Headers,
-					Payloads: original.Payloads,
+					Header:   srcValue.Headers,
+					Payloads: srcValue.Payloads,
 					Body:     nil,
 				}
 			},
@@ -103,13 +97,6 @@ func main() {
 		defer wg.Done()
 		reporter.StartWorker(responseProvider, nil)
 	}()
-
-	// for status := range statuses {
-	// 	log.Println(status.Message)
-	// 	if status.Err {
-	// 		os.Exit(1)
-	// 	}
-	// }
 
 	wg.Wait()
 }

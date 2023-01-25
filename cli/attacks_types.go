@@ -1,4 +1,4 @@
-package docs
+package cli
 
 const (
 	ClusterAttack   = "cluster"

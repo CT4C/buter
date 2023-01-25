@@ -16,11 +16,10 @@ type Cluster struct {
 	PositionsAmount   int
 }
 
-func (c *Cluster) ProduceUrls(urlConsumer chan CraftedPayload) chan error {
+func (c *Cluster) ProducePayload(urlConsumer chan CraftedPayload) chan error {
 	/*
 		TODO: Miss when one payloader grater the another one
 	*/
-	defer close(urlConsumer)
 	defer close(c.errChanel)
 
 	if c.TotalPayloads <= 0 {
