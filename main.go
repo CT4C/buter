@@ -13,6 +13,7 @@ import (
 	"github.com/edpryk/buter/internal/modules/payloader"
 	"github.com/edpryk/buter/internal/modules/reporter"
 	"github.com/edpryk/buter/internal/modules/requester"
+	"github.com/edpryk/buter/lib/transport"
 )
 
 var (
@@ -29,6 +30,10 @@ var (
 func main() {
 	log.SetFlags(2)
 
+	/*
+		Need to test target connection before start
+	*/
+
 	userInput = docs.ParseFlags()
 	totalPayloads, payloadSet, err = prepare.PreparePayloads(userInput.PayloadFiles)
 	if err != nil {
@@ -44,7 +49,7 @@ func main() {
 
 	attackValue := userInput.Url + prepare.AttackValueSeparator + userInput.Headers
 
-	config = payloader.Config{
+	Payloader := payloader.New(payloader.Config{
 		AttackValue:     attackValue,
 		AttackType:      userInput.AttackType,
 		PayloadSet:      payloadSet,
@@ -52,45 +57,52 @@ func main() {
 		Ctx:             rootContext,
 		PayloadConsumer: paylaodConsumer,
 		StatusChan:      statuses,
-	}
+	})
 
-	Payloader := payloader.New(config)
-
+	// Return payload provider instead of passing payloadConsumer
 	err = Payloader.PrepareAttack()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	ticker := time.NewTicker(time.Duration(userInput.Delay * int(time.Millisecond)))
-
-	requetsQueue := requester.NewRequestQueue(requester.RequestQueueConfig{
+	queueWorker := requester.NewRequestQueue(requester.QueueWorkerConfig{
 		MaxConcurrentRequests: userInput.MaxConcurrent,
+		Ctx:                   rootContext,
+		Delay:                 userInput.Delay,
+		Retries:               3,
 	})
 
-	consumer, provider, _ := requetsQueue.StartWorker()
+	requestConsumer, responseProvider, _ := queueWorker.Run()
 	reporter := reporter.New()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		for craftedPayload := range paylaodConsumer {
-			consumer <- requester.ReuqestParameters{
-				Method:   userInput.Method,
-				Url:      craftedPayload.Url,
-				Header:   craftedPayload.Headers,
-				Body:     nil,
-				Payloads: craftedPayload.Payloads,
-			}
+		transport.MutableTransit(
+			paylaodConsumer,
+			requestConsumer,
+			func(original payloader.CraftedPayload) requester.ReuqestParameters {
+				return requester.ReuqestParameters{
+					Url:      original.Url,
+					Method:   userInput.Method,
+					Header:   original.Headers,
+					Payloads: original.Payloads,
+					Body:     nil,
+				}
+			},
+			time.Duration(0),
+		)
 
-			<-ticker.C
-		}
-
-		close(consumer)
+		close(requestConsumer)
 	}()
 
-	reporter.ListenReponse(provider, nil)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		reporter.StartWorker(responseProvider, nil)
+	}()
 
 	// for status := range statuses {
 	// 	log.Println(status.Message)
@@ -100,5 +112,4 @@ func main() {
 	// }
 
 	wg.Wait()
-	ticker.Stop()
 }
