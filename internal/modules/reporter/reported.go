@@ -17,7 +17,7 @@ type Filters interface {
 	Duration() bool
 }
 
-func (r Reporter) ListenReponse(responseQ chan requester.CustomResponse, filters Filters) {
+func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters Filters) {
 	for res := range responseQ {
 		report := fmt.Sprintf("%3s", "")
 
