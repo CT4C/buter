@@ -1,7 +1,7 @@
 package cli
 
 const (
-	ClusterAttack   = "cluster"
-	SniperAttack    = "sniper"
-	PitchForkAttack = "pitch"
+	ClusterAttack = "cluster"
+	SniperAttack  = "sniper"
+	// PitchForkAttack = "pitch"
 )

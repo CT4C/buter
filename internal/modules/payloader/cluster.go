@@ -2,8 +2,6 @@ package payloader
 
 import (
 	"context"
-
-	"github.com/edpryk/buter/internal/helpers/prepare"
 )
 
 type Cluster struct {
@@ -14,46 +12,14 @@ type Cluster struct {
 	proceededPayloads int
 	errChanel         chan error
 	PositionsAmount   int
+	workingPayloadSet []string
+	endSig            chan int
 }
 
-func updateValue(value string, payload string, positions [2]int) string {
-	return value[:positions[0]] + payload + value[positions[1]:]
-}
-
-func updateValueWithPayloadList(value string, payloadNode *PayloadNode, workingPayloadsSet []string, payloadConsumer chan CraftedPayload) (produced int) {
-	for _, payload := range payloadNode.PayloadList {
-		workingPayloadsSet[payloadNode.Number] = payload
-
-		updatedAttackValue := updateValue(value, payload, payloadNode.Points)
-
-		payloadNode.CurrentPayloadIdx += 1
-		payloadNode.Points[1] = payloadNode.Points[0] + len(payload)
-		/*
-			Because in another situatino chanel has a pointer to
-			the workinPayloadSet slice, and last values will change
-			when a clinet will read from consumer
-		*/
-		workinPayloadCopy := make([]string, len(workingPayloadsSet))
-		copy(workinPayloadCopy, workingPayloadsSet)
-
-		/*
-			1. Send to channel
-			2. Increment proceeded payloader
-		*/
-		parsedAttackValue, _ := prepare.ParseAttackValue(updatedAttackValue)
-
-		payloadConsumer <- CraftedPayload{
-			Url:      parsedAttackValue.Url,
-			Headers:  parsedAttackValue.Headers,
-			Payloads: workinPayloadCopy,
-		}
-		produced++
-	}
-
-	return
-}
-
-func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan error {
+func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
+	defer func() {
+		c.endSig <- 0
+	}()
 	/*
 		TODO: Miss when one payloader grater the another one
 	*/
@@ -61,18 +27,17 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan error
 
 	if c.TotalPayloads <= 0 {
 		c.errChanel <- errInvalidTotalPayload
-		return c.errChanel
+		return c.endSig
 	}
 
 	var (
 		updatedAttackValue = c.AttackValue
-		workingPayloadsSet = make([]string, c.PositionsAmount)
 	)
 
 	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
 
 		if c.EntryNode.NextNode == nil {
-			producedPayloads := updateValueWithPayloadList(updatedAttackValue, c.EntryNode, workingPayloadsSet, payloadConsumer)
+			producedPayloads := processPayloads(updatedAttackValue, c.EntryNode, c.workingPayloadSet, payloadConsumer)
 
 			/*
 				1. Increment previous paylaod index
@@ -87,10 +52,10 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan error
 			c.EntryNode.CurrentPayloadIdx = 0
 			c.EntryNode = c.EntryNode.PreviousNode
 			c.EntryNode.CurrentPayloadIdx += 1
-			workingPayloadsSet = make([]string, c.PositionsAmount)
+			c.workingPayloadSet = make([]string, c.PositionsAmount)
 		} else {
 			// ### TOP level paylaod processing ###
-			workingPayloadsSet[c.EntryNode.Number] = c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
+			c.workingPayloadSet[c.EntryNode.Number] = c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
 
 			/*
 				IF current payloader index == payloader list length (IS END)
@@ -133,10 +98,12 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan error
 
 			c.EntryNode.WorkingPayload = nextPayload
 
-			updatedAttackValue = updatedAttackValue[:c.EntryNode.Points[0]] + c.EntryNode.WorkingPayload + updatedAttackValue[c.EntryNode.Points[1]:]
+			updatedAttackValue = updateValue(updatedAttackValue, c.EntryNode.WorkingPayload, c.EntryNode.Points)
 
 			/*
 				Current Points correction
+
+				Need to add method to the node to proceed this case
 			*/
 			c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(c.EntryNode.WorkingPayload)
 			/*
@@ -164,7 +131,7 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan error
 		}
 	}
 
-	return c.errChanel
+	return c.endSig
 }
 
 func (c Cluster) Proceeded() int {
@@ -184,6 +151,8 @@ func NewCluster(ctx context.Context, attackValue string, entryNode *PayloadNode,
 			value to a chnnel, til someone else read the value, but in
 			synchronous code, no one else can't read in the same time
 		*/
-		errChanel: make(chan error, 1),
+		errChanel:         make(chan error, 1),
+		workingPayloadSet: make([]string, positionsAmount),
+		endSig:            make(chan int, 1),
 	}
 }

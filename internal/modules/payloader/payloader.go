@@ -10,7 +10,7 @@ import (
 )
 
 type Attacker interface {
-	ProducePayload(urlConsumer chan CraftedPayload) chan error
+	ProducePayload(payloadConsumer chan CraftedPayload) chan int
 	Proceeded() int
 }
 
@@ -37,11 +37,11 @@ type ProcessStatus struct {
 type Buter struct {
 	Config
 
-	payloadEntryNode *PayloadNode
-	attacker         Attacker
-	startTime        time.Time
-	payloadProvider  chan CraftedPayload
-	errQ             chan error
+	payloadNode     *PayloadNode
+	attacker        Attacker
+	startTime       time.Time
+	payloadProvider chan CraftedPayload
+	errQ            chan error
 }
 
 func (b *Buter) PrepareAttack() (payloadPrivider chan CraftedPayload, err chan error) {
@@ -54,7 +54,7 @@ func (b *Buter) PrepareAttack() (payloadPrivider chan CraftedPayload, err chan e
 			os.Exit(1)
 		}
 		b.TotalPayloads = totalPayloads
-		b.payloadEntryNode = entryNode
+		b.payloadNode = entryNode
 
 		if err := b.setAttacker(b.AttackType); err != nil {
 			fmt.Println(err)
@@ -65,12 +65,7 @@ func (b *Buter) PrepareAttack() (payloadPrivider chan CraftedPayload, err chan e
 			defer close(b.payloadProvider)
 
 			select {
-			case err := <-b.attacker.ProducePayload(b.payloadProvider):
-				if err != nil {
-					fmt.Println(err)
-					b.errQ <- err
-				}
-
+			case <-b.attacker.ProducePayload(b.payloadProvider):
 				return
 			case <-b.Ctx.Done():
 				return
@@ -84,7 +79,10 @@ func (b *Buter) PrepareAttack() (payloadPrivider chan CraftedPayload, err chan e
 func (b *Buter) setAttacker(attackType string) error {
 	switch attackType {
 	case cli.ClusterAttack:
-		b.attacker = NewCluster(b.Ctx, b.AttackValue, b.payloadEntryNode, b.TotalPayloads, len(b.PayloadSet))
+		b.attacker = NewCluster(b.Ctx, b.AttackValue, b.payloadNode, b.TotalPayloads, len(b.PayloadSet))
+		return nil
+	case cli.SniperAttack:
+		b.attacker = NewSniper(b.Ctx, b.AttackValue, b.payloadNode)
 		return nil
 	default:
 		return errAttackNotSupported
