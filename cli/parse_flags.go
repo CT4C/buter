@@ -12,6 +12,8 @@ type Input struct {
 	MaxConcurrent int
 	Delay         int
 	Method        string
+	Retries       int
+	RetrayDelay   int
 
 	Headers
 	PayloadFiles
@@ -33,6 +35,8 @@ func ParseFlags() Input {
 	flag.IntVar(&input.MaxConcurrent, threadsFlag, defaultThreads, threadsUsage)
 	flag.Var(&input.Headers, headersFlag, headersUsage)
 	flag.IntVar(&input.Delay, delayFlag, defaultDealy, delayUsage)
+	flag.IntVar(&input.RetrayDelay, retriesDelayFlag, defaultRetryDelay, retriyDelayUsage)
+	flag.IntVar(&input.Retries, retriesAmountFlag, defautlRetriesAmount, retriesAmountUsage)
 
 	flag.Parse()
 

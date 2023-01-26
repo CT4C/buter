@@ -10,12 +10,13 @@ import (
 )
 
 type LimitedQConfig struct {
-	MaxThreads int
-	Delay      int
-	Retries    int
-	ResponseQ  chan CustomResponse
-	ErrQ       chan error
-	Ctx        context.Context
+	MaxThreads  int
+	Delay       int
+	RetrayDelay int
+	Retries     int
+	ResponseQ   chan CustomResponse
+	ErrQ        chan error
+	Ctx         context.Context
 }
 
 type LimitedQueue struct {
@@ -65,7 +66,7 @@ func (lm *LimitedQueue) Proceed() {
 				defer lm.wg.Done()
 
 				startTime := time.Now()
-				res, err := stability.Retry(requstCaller, lm.Retries, lm.Delay)
+				res, err := stability.Retry(requstCaller, lm.Retries, lm.RetrayDelay)
 				if err != nil {
 					lm.ErrQ <- err
 				} else {

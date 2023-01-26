@@ -16,7 +16,44 @@ type Cluster struct {
 	PositionsAmount   int
 }
 
-func (c *Cluster) ProducePayload(urlConsumer chan CraftedPayload) chan error {
+func updateValue(value string, payload string, positions [2]int) string {
+	return value[:positions[0]] + payload + value[positions[1]:]
+}
+
+func updateValueWithPayloadList(value string, payloadNode *PayloadNode, workingPayloadsSet []string, payloadConsumer chan CraftedPayload) (produced int) {
+	for _, payload := range payloadNode.PayloadList {
+		workingPayloadsSet[payloadNode.Number] = payload
+
+		updatedAttackValue := updateValue(value, payload, payloadNode.Points)
+
+		payloadNode.CurrentPayloadIdx += 1
+		payloadNode.Points[1] = payloadNode.Points[0] + len(payload)
+		/*
+			Because in another situatino chanel has a pointer to
+			the workinPayloadSet slice, and last values will change
+			when a clinet will read from consumer
+		*/
+		workinPayloadCopy := make([]string, len(workingPayloadsSet))
+		copy(workinPayloadCopy, workingPayloadsSet)
+
+		/*
+			1. Send to channel
+			2. Increment proceeded payloader
+		*/
+		parsedAttackValue, _ := prepare.ParseAttackValue(updatedAttackValue)
+
+		payloadConsumer <- CraftedPayload{
+			Url:      parsedAttackValue.Url,
+			Headers:  parsedAttackValue.Headers,
+			Payloads: workinPayloadCopy,
+		}
+		produced++
+	}
+
+	return
+}
+
+func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan error {
 	/*
 		TODO: Miss when one payloader grater the another one
 	*/
@@ -35,40 +72,18 @@ func (c *Cluster) ProducePayload(urlConsumer chan CraftedPayload) chan error {
 	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
 
 		if c.EntryNode.NextNode == nil {
-			// ### Last Level payloader Processing ###
-			for _, payload := range c.EntryNode.PayloadList {
-				workingPayloadsSet[c.EntryNode.Number] = payload
-
-				updatedAttackValue = updatedAttackValue[:c.EntryNode.Points[0]] + payload + updatedAttackValue[c.EntryNode.Points[1]:]
-
-				c.EntryNode.CurrentPayloadIdx += 1
-				c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(payload)
-				/*
-					Because in another situatino chanel has a pointer to
-					the workinPayloadSet slice, and last values will change
-					when a clinet will read from consumer
-				*/
-				workinPayloadCopy := make([]string, len(workingPayloadsSet))
-				copy(workinPayloadCopy, workingPayloadsSet)
-
-				/*
-					1. Send to channel
-					2. Increment proceeded payloader
-				*/
-				parsedAttackValue, _ := prepare.ParseAttackValue(updatedAttackValue)
-
-				urlConsumer <- CraftedPayload{
-					Url:      parsedAttackValue.Url,
-					Headers:  parsedAttackValue.Headers,
-					Payloads: workinPayloadCopy,
-				}
-				c.proceededPayloads += 1
-			}
+			producedPayloads := updateValueWithPayloadList(updatedAttackValue, c.EntryNode, workingPayloadsSet, payloadConsumer)
 
 			/*
 				1. Increment previous paylaod index
 				2. set next c.EntryNode to previous one
 			*/
+			/*
+				TODO: Need to add functionality to the linked list
+				like as BackPrevioudNode/StepBack/Return/Forwared/Next
+				for movind back/forward btw nodes
+			*/
+			c.proceededPayloads += producedPayloads
 			c.EntryNode.CurrentPayloadIdx = 0
 			c.EntryNode = c.EntryNode.PreviousNode
 			c.EntryNode.CurrentPayloadIdx += 1

@@ -64,7 +64,7 @@ func main() {
 		MaxConcurrentRequests: userInput.MaxConcurrent,
 		Ctx:                   rootContext,
 		Delay:                 userInput.Delay,
-		Retries:               3,
+		Retries:               userInput.Retries,
 	})
 
 	requestConsumer, responseProvider, _ := queueWorker.Run()
