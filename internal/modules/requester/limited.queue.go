@@ -2,7 +2,9 @@ package requester
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -53,11 +55,17 @@ func (lm *LimitedQueue) Proceed() {
 		ticker := time.NewTicker(time.Duration(lm.Delay) * time.Millisecond)
 		for parameters := range lm.q {
 			requstCaller := func() (any, error) {
+				reader := strings.NewReader(parameters.Body.String())
+
+				if parameters.Method == http.MethodPost {
+					parameters.Header["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body.String()))
+				}
+
 				return Do(
 					parameters.Method,
 					parameters.Url,
 					parameters.Header,
-					parameters.Body,
+					reader,
 				)
 			}
 

@@ -2,8 +2,6 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
 )
 
 type PayloadFiles []string
@@ -21,28 +19,54 @@ func (ps *PayloadFiles) String() string {
 	return s
 }
 
-type Headers string
+type Headers map[string]string
 
 func (h *Headers) Set(value string) error {
-	if len(value) < 1 {
+	if len(value) == 0 {
+		h = nil
 		return nil
 	}
 
-	d := make(map[string]string)
+	*h = make(map[string]string)
 
-	if err := json.Unmarshal([]byte(value), &d); err != nil {
-		fmt.Println("Can't parse headers", err)
-		os.Exit(1)
+	if err := json.Unmarshal([]byte(value), h); err != nil {
+		return err
 	}
-	b, _ := json.Marshal(d)
-
-	parsed := Headers(b)
-
-	(*h) = parsed
 
 	return nil
 }
 
 func (h *Headers) String() string {
-	return string(*h)
+	dataB, err := json.Marshal(h)
+	if err != nil {
+		return "-"
+	}
+
+	return string(dataB)
+}
+
+type Body map[string]string
+
+func (b *Body) Set(value string) error {
+	if len(value) == 0 {
+		b = nil
+		return nil
+	}
+
+	*b = make(map[string]string)
+
+	if err := json.Unmarshal([]byte(value), b); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Body) String() string {
+	dataB, err := json.Marshal(b)
+	if err != nil {
+		return "-"
+	}
+
+	return string(dataB)
 }

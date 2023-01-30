@@ -2,10 +2,13 @@ package requester
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"time"
 )
+
+type Stringer interface {
+	String() string
+}
 
 type QueueWorkerConfig struct {
 	MaxConcurrentRequests int
@@ -25,7 +28,7 @@ type ReuqestParameters struct {
 	Method   string
 	Url      string
 	Header   map[string]string
-	Body     io.Reader
+	Body     Stringer
 	Payloads []string
 }
 

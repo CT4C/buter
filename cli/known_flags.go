@@ -10,4 +10,5 @@ var (
 	methodFlag        = "m"
 	retriesAmountFlag = "r"
 	retriesDelayFlag  = "rd"
+	bodyFlag          = "b"
 )

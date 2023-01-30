@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/edpryk/buter/cli"
 	"github.com/edpryk/buter/internal/helpers/prepare"
+	"github.com/edpryk/buter/internal/helpers/transform"
 	"github.com/edpryk/buter/internal/modules/payloader"
 	"github.com/edpryk/buter/internal/modules/reporter"
 	"github.com/edpryk/buter/internal/modules/requester"
@@ -44,7 +46,9 @@ func main() {
 	rootContext, cancel := context.WithTimeout(context.Background(), time.Duration(10*time.Second))
 	defer cancel()
 
-	attackValue := userInput.Url + prepare.AttackValueSeparator + userInput.Headers.String()
+	// TODO: move to separated func or method
+
+	attackValue := strings.Join([]string{userInput.Url, userInput.Headers.String(), userInput.Body.String()}, prepare.AttackValueSeparator)
 
 	Payloader := payloader.New(payloader.Config{
 		AttackValue:   attackValue,
@@ -83,7 +87,7 @@ func main() {
 					Method:   userInput.Method,
 					Header:   srcValue.Headers,
 					Payloads: srcValue.Payloads,
-					Body:     nil,
+					Body:     transform.NewMapStringer(srcValue.Body),
 				}
 			},
 			time.Duration(0),

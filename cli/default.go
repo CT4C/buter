@@ -9,4 +9,5 @@ var (
 	defaultMethod        = "get"
 	defautlRetriesAmount = 1
 	defaultRetryDelay    = 1000
+	defaultBody          = ""
 )

@@ -18,6 +18,7 @@ type CraftedPayload struct {
 	Url      string
 	Payloads []string
 	Headers  map[string]string
+	Body     map[string]string
 }
 
 type Config struct {

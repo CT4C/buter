@@ -15,4 +15,5 @@ var (
 	methodUsage        = fmt.Sprintf("%s (Method)", "-m get")
 	retriesAmountUsage = "-r 3"
 	retriyDelayUsage   = "-rd 1000"
+	bodyUsage          = "{\"email\":\"user_nameg@mail.com\",\"password\":\"12345\"}"
 )
