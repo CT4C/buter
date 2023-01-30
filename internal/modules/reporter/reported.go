@@ -26,7 +26,7 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 		code := res.StatusCode
 		payloads := ""
 		for number, p := range res.Payloads {
-			payloads += fmt.Sprintf("P_%d: %-5s", number+1, p)
+			payloads += fmt.Sprintf("P_%d: %21s", number+1, p)
 		}
 
 		report += payloads
@@ -34,7 +34,7 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 		if filters != nil {
 		}
 
-		report += fmt.Sprintf("Status %-5d", code)
+		report += fmt.Sprintf("%5sStatus %-5d", " ", code)
 		report += fmt.Sprintf("Duration %5dms", duration/time.Millisecond)
 
 		log.Println(report)

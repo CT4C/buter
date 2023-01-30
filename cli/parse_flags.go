@@ -1,7 +1,6 @@
-package docs
+package cli
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -10,12 +9,15 @@ import (
 type Input struct {
 	Url           string
 	AttackType    string
-	Headers       string
 	MaxConcurrent int
 	Delay         int
 	Method        string
+	Retries       int
+	RetrayDelay   int
 
+	Headers
 	PayloadFiles
+	Body *Body
 }
 
 /*
@@ -25,29 +27,22 @@ print an error and usage
 and exits process
 */
 func ParseFlags() Input {
-	input := Input{}
+	input := Input{
+		Body: &Body{},
+	}
 
 	flag.Var(&input.PayloadFiles, payloadFlag, payloadUsage)
 	flag.StringVar(&input.Url, urlFlag, defaultUrl, urlUsage)
 	flag.StringVar(&input.Method, methodFlag, defaultMethod, methodUsage)
 	flag.StringVar(&input.AttackType, attackTypeFlag, defaultAttackType, attackTypeUsage)
 	flag.IntVar(&input.MaxConcurrent, threadsFlag, defaultThreads, threadsUsage)
-	flag.StringVar(&input.Headers, headersFlag, defaultHeaders, headersUsage)
+	flag.Var(&input.Headers, headersFlag, headersUsage)
 	flag.IntVar(&input.Delay, delayFlag, defaultDealy, delayUsage)
+	flag.IntVar(&input.RetrayDelay, retriesDelayFlag, defaultRetryDelay, retriyDelayUsage)
+	flag.IntVar(&input.Retries, retriesAmountFlag, defautlRetriesAmount, retriesAmountUsage)
+	flag.Var(input.Body, bodyFlag, bodyUsage)
 
 	flag.Parse()
-
-	if len(input.Headers) > 0 {
-		d := make(map[string]string)
-
-		if err := json.Unmarshal([]byte(input.Headers), &d); err != nil {
-			fmt.Println("Can't parse headers", err)
-			os.Exit(1)
-		}
-		b, _ := json.Marshal(d)
-
-		input.Headers = string(b)
-	}
 
 	if err := validateInput(input); err != nil {
 		fmt.Println(err.Error())
