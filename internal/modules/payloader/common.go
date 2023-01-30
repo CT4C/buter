@@ -5,5 +5,5 @@ import (
 )
 
 var (
-	rePayloadPosition = regexp.MustCompile("(![^!]+!)")
+	rePayloadPosition = regexp.MustCompile("(![^!]+!)+")
 )

@@ -19,6 +19,9 @@ type Filters interface {
 
 func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters Filters) {
 	for res := range responseQ {
+		// if res.StatusCode > 300 {
+		// 	continue
+		// }
 		report := fmt.Sprintf("%3s", "")
 
 		duration := res.Duration
@@ -26,7 +29,7 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 		code := res.StatusCode
 		payloads := ""
 		for number, p := range res.Payloads {
-			payloads += fmt.Sprintf("P_%d: %21s", number+1, p)
+			payloads += fmt.Sprintf("%-5sP_%d: %32s", " ", number+1, p)
 		}
 
 		report += payloads

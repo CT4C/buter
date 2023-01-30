@@ -10,4 +10,5 @@ var (
 	defautlRetriesAmount = 1
 	defaultRetryDelay    = 1000
 	defaultBody          = ""
+	defaultTimeout       = 0
 )

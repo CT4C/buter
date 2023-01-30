@@ -2,6 +2,7 @@ package requester
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 )
@@ -64,6 +65,7 @@ func (rq *QueueWorker) Run() (reqConsumer chan ReuqestParameters, resProvider ch
 				limitedQ.Receive(requestParameters)
 
 			case <-rq.Ctx.Done():
+				log.Println("Timeout")
 				allowRun = false
 				break
 			}

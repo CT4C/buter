@@ -22,12 +22,11 @@ func (ps *PayloadFiles) String() string {
 type Headers map[string]string
 
 func (h *Headers) Set(value string) error {
+	*h = make(map[string]string)
+
 	if len(value) == 0 {
-		h = nil
 		return nil
 	}
-
-	*h = make(map[string]string)
 
 	if err := json.Unmarshal([]byte(value), h); err != nil {
 		return err
@@ -48,12 +47,12 @@ func (h *Headers) String() string {
 type Body map[string]string
 
 func (b *Body) Set(value string) error {
+	*b = make(map[string]string)
+
 	if len(value) == 0 {
 		b = nil
 		return nil
 	}
-
-	*b = make(map[string]string)
 
 	if err := json.Unmarshal([]byte(value), b); err != nil {
 		return err

@@ -11,4 +11,5 @@ var (
 	retriesAmountFlag = "r"
 	retriesDelayFlag  = "rd"
 	bodyFlag          = "b"
+	timeoutFlag       = "T"
 )

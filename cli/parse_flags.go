@@ -14,6 +14,7 @@ type Input struct {
 	Method        string
 	Retries       int
 	RetrayDelay   int
+	Timeout       int
 
 	Headers
 	PayloadFiles
@@ -41,6 +42,7 @@ func ParseFlags() Input {
 	flag.IntVar(&input.RetrayDelay, retriesDelayFlag, defaultRetryDelay, retriyDelayUsage)
 	flag.IntVar(&input.Retries, retriesAmountFlag, defautlRetriesAmount, retriesAmountUsage)
 	flag.Var(input.Body, bodyFlag, bodyUsage)
+	flag.IntVar(&input.Timeout, timeoutFlag, defaultTimeout, timeoutUsage)
 
 	flag.Parse()
 

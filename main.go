@@ -20,11 +20,13 @@ import (
 
 var (
 	config        payloader.Config
-	userInput     cli.Input
+	configs       cli.Input
 	payloadSet    [][]string
 	totalPayloads int
 	wg            = &sync.WaitGroup{}
 	mut           = &sync.Mutex{}
+	rootContext   context.Context
+	cancel        context.CancelFunc
 
 	err error
 )
@@ -36,23 +38,29 @@ func main() {
 		Need to test target connection before start
 	*/
 
-	userInput = cli.ParseFlags()
-	totalPayloads, payloadSet, err = prepare.PreparePayloads(userInput.PayloadFiles)
+	configs = cli.ParseFlags()
+	totalPayloads, payloadSet, err = prepare.PreparePayloads(configs.PayloadFiles)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	rootContext, cancel := context.WithTimeout(context.Background(), time.Duration(10*time.Second))
+	if configs.Timeout > 0 {
+		rootContext, cancel = context.WithTimeout(context.Background(), time.Duration(10*time.Second))
+	} else {
+		rootContext, cancel = context.WithCancel(context.Background())
+	}
 	defer cancel()
 
 	// TODO: move to separated func or method
 
-	attackValue := strings.Join([]string{userInput.Url, userInput.Headers.String(), userInput.Body.String()}, prepare.AttackValueSeparator)
+	attackValues := []string{configs.Url, configs.Headers.String(), configs.Body.String()}
+
+	attackValueString := strings.Join(attackValues, prepare.AttackValueSeparator)
 
 	Payloader := payloader.New(payloader.Config{
-		AttackValue:   attackValue,
-		AttackType:    userInput.AttackType,
+		AttackValue:   attackValueString,
+		AttackType:    configs.AttackType,
 		PayloadSet:    payloadSet,
 		TotalPayloads: totalPayloads,
 		Ctx:           rootContext,
@@ -65,15 +73,14 @@ func main() {
 	// }
 
 	queueWorker := requester.NewRequestQueue(requester.QueueWorkerConfig{
-		MaxConcurrentRequests: userInput.MaxConcurrent,
+		MaxConcurrentRequests: configs.MaxConcurrent,
 		Ctx:                   rootContext,
-		Delay:                 userInput.Delay,
-		Retries:               userInput.Retries,
+		Delay:                 configs.Delay,
+		Retries:               configs.Retries,
 	})
 
 	requestConsumer, responseProvider, _ := queueWorker.Run()
 	reporter := reporter.New()
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -84,7 +91,7 @@ func main() {
 			func(srcValue payloader.CraftedPayload) requester.ReuqestParameters {
 				return requester.ReuqestParameters{
 					Url:      srcValue.Url,
-					Method:   userInput.Method,
+					Method:   configs.Method,
 					Header:   srcValue.Headers,
 					Payloads: srcValue.Payloads,
 					Body:     transform.NewMapStringer(srcValue.Body),

@@ -49,6 +49,9 @@ func (b *Buter) PrepareAttack() (payloadPrivider chan CraftedPayload, err chan e
 	go func() {
 		defer close(b.errQ)
 
+		/*
+			TODO: Add name to payloads
+		*/
 		totalPayloads, entryNode, err := transformPayload(b.AttackValue, b.PayloadSet)
 		if err != nil {
 			fmt.Println(err)

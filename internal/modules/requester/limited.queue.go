@@ -57,14 +57,21 @@ func (lm *LimitedQueue) Proceed() {
 			requstCaller := func() (any, error) {
 				reader := strings.NewReader(parameters.Body.String())
 
+				// TODO: move to seprated func
+				defaultHeaders := make(map[string]string)
+
 				if parameters.Method == http.MethodPost {
-					parameters.Header["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body.String()))
+					defaultHeaders["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body.String()))
+				}
+
+				for key := range parameters.Header {
+					defaultHeaders[key] = parameters.Header[key]
 				}
 
 				return Do(
 					parameters.Method,
 					parameters.Url,
-					parameters.Header,
+					defaultHeaders,
 					reader,
 				)
 			}
@@ -72,9 +79,9 @@ func (lm *LimitedQueue) Proceed() {
 			lm.wg.Add(1)
 			go func(params ReuqestParameters) {
 				defer lm.wg.Done()
-
 				startTime := time.Now()
 				res, err := stability.Retry(requstCaller, lm.Retries, lm.RetrayDelay)
+
 				if err != nil {
 					lm.ErrQ <- err
 				} else {
@@ -88,21 +95,24 @@ func (lm *LimitedQueue) Proceed() {
 
 			<-ticker.C
 		}
-	}()
 
-	close(lm.q)
+		ticker.Stop()
+	}()
+	// close(lm.q)
 	lm.wg.Wait()
 	lm.reNew()
 }
 
 func (lm *LimitedQueue) ProceedIFFull() {
 	if lm.IsFull() {
+		close(lm.q)
 		lm.Proceed()
 	}
 }
 
 func (lm *LimitedQueue) ProceedIFNotFull() {
 	if lm.IsNotEmpty() && !lm.IsFull() {
+		close(lm.q)
 		lm.Proceed()
 	}
 }
