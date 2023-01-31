@@ -2,6 +2,7 @@ package requester
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 )
@@ -49,6 +50,7 @@ func (rq *QueueWorker) Run() (reqConsumer chan ReuqestParameters, resProvider ch
 			RetrayDelay: rq.RetrayDelay,
 			ResponseQ:   rq.sendQueue,
 			ErrQ:        rq.errQueue,
+			Ctx:         rq.Ctx,
 		})
 
 		for allowRun := true; allowRun == true; {
@@ -64,8 +66,9 @@ func (rq *QueueWorker) Run() (reqConsumer chan ReuqestParameters, resProvider ch
 				limitedQ.Receive(requestParameters)
 
 			case <-rq.Ctx.Done():
+				log.Println("Worked Canceled")
 				allowRun = false
-				break
+				return
 			}
 		}
 

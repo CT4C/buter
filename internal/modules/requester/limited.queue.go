@@ -2,13 +2,9 @@ package requester
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"strings"
+	"log"
 	"sync"
 	"time"
-
-	"github.com/edpryk/buter/lib/stability"
 )
 
 type LimitedQConfig struct {
@@ -22,88 +18,79 @@ type LimitedQConfig struct {
 }
 
 type LimitedQueue struct {
-	q  chan ReuqestParameters
-	wg *sync.WaitGroup
+	requetsQ chan ReuqestParameters
+	wg       *sync.WaitGroup
 
 	LimitedQConfig
 }
 
-func (lm *LimitedQueue) IsFull() bool {
-	return len(lm.q) == lm.MaxThreads
+func (lq *LimitedQueue) IsFull() bool {
+	return len(lq.requetsQ) == lq.MaxThreads
 }
 
-func (lm *LimitedQueue) IsNotEmpty() bool {
-	return len(lm.q) > 0
+func (lq *LimitedQueue) IsNotEmpty() bool {
+	return len(lq.requetsQ) > 0
 }
 
-func (lm *LimitedQueue) Receive(rp ReuqestParameters) {
-	lm.q <- rp
+func (lq *LimitedQueue) Receive(rp ReuqestParameters) {
+	lq.requetsQ <- rp
 }
 
-func (lm *LimitedQueue) reNew() {
-	lm.q = make(chan ReuqestParameters, lm.MaxThreads)
+func (lq *LimitedQueue) reNew() {
+	lq.requetsQ = make(chan ReuqestParameters, lq.MaxThreads)
 }
 
-func (lm *LimitedQueue) Proceed() {
-	/*
-		Need to add context handling
-	*/
-	lm.wg.Add(1)
+func (lq *LimitedQueue) Proceed() {
+	lq.wg.Add(1)
 	go func() {
-		defer lm.wg.Done()
+		defer lq.wg.Done()
 
-		ticker := time.NewTicker(time.Duration(lm.Delay) * time.Millisecond)
-		for parameters := range lm.q {
-			requstCaller := func() (any, error) {
-				reader := strings.NewReader(parameters.Body.String())
+		ticker := time.NewTicker(time.Duration(lq.Delay) * time.Millisecond)
+		for parameters := range lq.requetsQ {
+			resCh, errCh := AsyncRequestWitnRetry(parameters, lq.Retries, lq.RetrayDelay)
 
-				if parameters.Method == http.MethodPost {
-					parameters.Header["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body.String()))
+			lq.wg.Add(1)
+			go func() {
+				defer lq.wg.Done()
+
+				select {
+				case res := <-resCh:
+					lq.ResponseQ <- res
+					return
+				case err := <-errCh:
+					lq.ErrQ <- err
+					return
+				case <-lq.Ctx.Done():
+					log.Printf("Request Canceled\n")
+					return
 				}
+			}()
 
-				return Do(
-					parameters.Method,
-					parameters.Url,
-					parameters.Header,
-					reader,
-				)
+			select {
+			case <-lq.Ctx.Done():
+				log.Println("LimitedQ Canceled")
+				return
+			case <-ticker.C:
 			}
-
-			lm.wg.Add(1)
-			go func(params ReuqestParameters) {
-				defer lm.wg.Done()
-
-				startTime := time.Now()
-				res, err := stability.Retry(requstCaller, lm.Retries, lm.RetrayDelay)
-				if err != nil {
-					lm.ErrQ <- err
-				} else {
-					lm.ResponseQ <- CustomResponse{
-						Response: res.(http.Response),
-						Duration: time.Since(startTime),
-						Payloads: params.Payloads,
-					}
-				}
-			}(parameters)
-
-			<-ticker.C
 		}
-	}()
 
-	close(lm.q)
-	lm.wg.Wait()
-	lm.reNew()
+		ticker.Stop()
+	}()
+	lq.wg.Wait()
+	lq.reNew()
 }
 
-func (lm *LimitedQueue) ProceedIFFull() {
-	if lm.IsFull() {
-		lm.Proceed()
+func (lq *LimitedQueue) ProceedIFFull() {
+	if lq.IsFull() {
+		close(lq.requetsQ)
+		lq.Proceed()
 	}
 }
 
-func (lm *LimitedQueue) ProceedIFNotFull() {
-	if lm.IsNotEmpty() && !lm.IsFull() {
-		lm.Proceed()
+func (lq *LimitedQueue) ProceedIFNotFull() {
+	if lq.IsNotEmpty() && !lq.IsFull() {
+		close(lq.requetsQ)
+		lq.Proceed()
 	}
 }
 
@@ -111,7 +98,7 @@ func NewLimitedQ(config LimitedQConfig) LimitedQueue {
 	return LimitedQueue{
 		LimitedQConfig: config,
 
-		q:  make(chan ReuqestParameters, config.MaxThreads),
-		wg: &sync.WaitGroup{},
+		requetsQ: make(chan ReuqestParameters, config.MaxThreads),
+		wg:       &sync.WaitGroup{},
 	}
 }

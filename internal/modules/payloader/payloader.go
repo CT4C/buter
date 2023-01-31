@@ -49,6 +49,9 @@ func (b *Buter) PrepareAttack() (payloadPrivider chan CraftedPayload, err chan e
 	go func() {
 		defer close(b.errQ)
 
+		/*
+			TODO: Add name to payloads
+		*/
 		totalPayloads, entryNode, err := transformPayload(b.AttackValue, b.PayloadSet)
 		if err != nil {
 			fmt.Println(err)
@@ -62,16 +65,17 @@ func (b *Buter) PrepareAttack() (payloadPrivider chan CraftedPayload, err chan e
 			os.Exit(1)
 		}
 
-		go func() {
-			defer close(b.payloadProvider)
+		// go func() {
+		defer close(b.payloadProvider)
 
-			select {
-			case <-b.attacker.ProducePayload(b.payloadProvider):
-				return
-			case <-b.Ctx.Done():
-				return
-			}
-		}()
+		select {
+		case <-b.attacker.ProducePayload(b.payloadProvider):
+			return
+		case <-b.Ctx.Done():
+			fmt.Println("Payloader Canceled")
+			return
+		}
+		// }()
 	}()
 
 	return b.payloadProvider, b.errQ
