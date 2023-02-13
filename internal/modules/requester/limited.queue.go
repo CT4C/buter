@@ -8,37 +8,39 @@ import (
 )
 
 type LimitedQConfig struct {
-	MaxThreads  int
-	Delay       int
-	RetrayDelay int
-	Retries     int
-	ResponseQ   chan CustomResponse
-	ErrQ        chan error
-	Ctx         context.Context
+	Ctx        context.Context
+	ErrQ       chan error
+	Delay      int
+	Retries    int
+	RetryDelay int
+	MaxThreads int
+	ResponseQ  chan CustomResponse
 }
 
 type LimitedQueue struct {
-	requetsQ chan ReuqestParameters
-	wg       *sync.WaitGroup
+	requestsQ chan RequestParameters
+	wg        *sync.WaitGroup
 
 	LimitedQConfig
 }
 
 func (lq *LimitedQueue) IsFull() bool {
-	return len(lq.requetsQ) == lq.MaxThreads
+	return len(lq.requestsQ) == lq.MaxThreads
 }
 
 func (lq *LimitedQueue) IsNotEmpty() bool {
-	return len(lq.requetsQ) > 0
+	return len(lq.requestsQ) > 0
 }
 
-func (lq *LimitedQueue) Receive(rp ReuqestParameters) {
-	lq.requetsQ <- rp
+func (lq *LimitedQueue) Receive(rp RequestParameters) {
+	lq.requestsQ <- rp
 }
 
 func (lq *LimitedQueue) reNew() {
-	lq.requetsQ = make(chan ReuqestParameters, lq.MaxThreads)
+	lq.requestsQ = make(chan RequestParameters, lq.MaxThreads)
 }
+
+func (lq *LimitedQueue) CLose() {}
 
 func (lq *LimitedQueue) Proceed() {
 	lq.wg.Add(1)
@@ -46,8 +48,8 @@ func (lq *LimitedQueue) Proceed() {
 		defer lq.wg.Done()
 
 		ticker := time.NewTicker(time.Duration(lq.Delay) * time.Millisecond)
-		for parameters := range lq.requetsQ {
-			resCh, errCh := AsyncRequestWitnRetry(parameters, lq.Retries, lq.RetrayDelay)
+		for parameters := range lq.requestsQ {
+			resCh, errCh := AsyncRequestWithRetry(parameters, lq.Retries, lq.RetryDelay)
 
 			lq.wg.Add(1)
 			go func() {
@@ -77,20 +79,21 @@ func (lq *LimitedQueue) Proceed() {
 		ticker.Stop()
 	}()
 	lq.wg.Wait()
-	lq.reNew()
 }
 
 func (lq *LimitedQueue) ProceedIFFull() {
 	if lq.IsFull() {
-		close(lq.requetsQ)
+		close(lq.requestsQ)
 		lq.Proceed()
+		lq.reNew()
 	}
 }
 
 func (lq *LimitedQueue) ProceedIFNotFull() {
 	if lq.IsNotEmpty() && !lq.IsFull() {
-		close(lq.requetsQ)
+		close(lq.requestsQ)
 		lq.Proceed()
+		lq.reNew()
 	}
 }
 
@@ -98,7 +101,7 @@ func NewLimitedQ(config LimitedQConfig) LimitedQueue {
 	return LimitedQueue{
 		LimitedQConfig: config,
 
-		requetsQ: make(chan ReuqestParameters, config.MaxThreads),
-		wg:       &sync.WaitGroup{},
+		requestsQ: make(chan RequestParameters, config.MaxThreads),
+		wg:        &sync.WaitGroup{},
 	}
 }

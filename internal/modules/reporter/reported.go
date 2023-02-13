@@ -37,7 +37,7 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 		if filters != nil {
 		}
 
-		report += fmt.Sprintf("%5sStatus %-5d", " ", code)
+		report += fmt.Sprintf("%1sStatus %-5d", " ", code)
 		report += fmt.Sprintf("Duration %5dms", duration/time.Millisecond)
 
 		log.Println(report)

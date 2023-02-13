@@ -13,7 +13,7 @@ func processPayloads(value string, payloadNode *PayloadNode, workingPayloadsSet 
 		workingPayloadsSet[payloadNode.Number] = payload
 
 		value = updateValue(value, payload, payloadNode.Points)
-
+		// fmt.Println(value)
 		payloadNode.CurrentPayloadIdx += 1
 		payloadNode.Points[1] = payloadNode.Points[0] + len(payload)
 		/*

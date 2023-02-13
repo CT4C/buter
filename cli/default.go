@@ -5,10 +5,11 @@ var (
 	defaultUrl           = ""
 	defaultThreads       = 10
 	defaultHeaders       = ""
-	defaultDealy         = 10
+	defaultDelay         = 150
 	defaultMethod        = "get"
-	defautlRetriesAmount = 1
+	defaultRetriesAmount = 1
 	defaultRetryDelay    = 1000
 	defaultBody          = ""
 	defaultTimeout       = 0
+	defaultDosRequests   = 10
 )

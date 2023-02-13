@@ -17,4 +17,5 @@ var (
 	retriyDelayUsage   = "-rd 1000"
 	bodyUsage          = "{\"email\":\"user_nameg@mail.com\",\"password\":\"12345\"}"
 	timeoutUsage       = "-T 10 (in Seconds)"
+	dosReqUsage        = "-R 10"
 )

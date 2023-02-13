@@ -12,4 +12,5 @@ var (
 	retriesDelayFlag  = "rd"
 	bodyFlag          = "b"
 	timeoutFlag       = "T"
+	dosRequestsFlag   = "R"
 )
