@@ -12,11 +12,11 @@ type Stringer interface {
 }
 
 type QueueWorkerConfig struct {
-	MaxConcurrentRequests int
-	Retries               int
-	RetrayDelay           int
-	Delay                 int
 	Ctx                   context.Context
+	Delay                 int
+	Retries               int
+	RetryDelay            int
+	MaxConcurrentRequests int
 }
 
 type CustomResponse struct {
@@ -25,64 +25,66 @@ type CustomResponse struct {
 	http.Response
 }
 
-type ReuqestParameters struct {
-	Method   string
+type RequestParameters struct {
 	Url      string
-	Header   map[string]string
 	Body     Stringer
+	Method   string
+	Header   map[string]string
 	Payloads []string
 }
 
 type QueueWorker struct {
-	receiveQueue chan ReuqestParameters
-	sendQueue    chan CustomResponse
-	errQueue     chan error
+	errQueue  chan error
+	requestQ  chan RequestParameters
+	responseQ chan CustomResponse
 
 	QueueWorkerConfig
 }
 
-func (rq *QueueWorker) Run() (reqConsumer chan ReuqestParameters, resProvider chan CustomResponse, errQ chan error) {
+func (rq *QueueWorker) Run() (reqConsumer chan RequestParameters, resProvider chan CustomResponse, errQ chan error) {
 	go func() {
 		limitedQ := NewLimitedQ(LimitedQConfig{
-			MaxThreads:  rq.MaxConcurrentRequests,
-			Delay:       rq.Delay,
-			Retries:     rq.Retries,
-			RetrayDelay: rq.RetrayDelay,
-			ResponseQ:   rq.sendQueue,
-			ErrQ:        rq.errQueue,
-			Ctx:         rq.Ctx,
+			MaxThreads: rq.MaxConcurrentRequests,
+			Delay:      rq.Delay,
+			Retries:    rq.Retries,
+			RetryDelay: rq.RetryDelay,
+			ResponseQ:  rq.responseQ,
+			ErrQ:       rq.errQueue,
+			Ctx:        rq.Ctx,
 		})
 
-		for allowRun := true; allowRun == true; {
+		allowRun := true
+		for allowRun == true {
 			select {
-			case requestParameters, ok := <-rq.receiveQueue:
+			case requestParameters, ok := <-rq.requestQ:
+				limitedQ.ProceedIFFull()
+
 				if !ok {
 					allowRun = false
 					limitedQ.ProceedIFNotFull()
 					break
 				}
 
-				limitedQ.ProceedIFFull()
 				limitedQ.Receive(requestParameters)
 
 			case <-rq.Ctx.Done():
 				log.Println("Worked Canceled")
 				allowRun = false
-				return
+				break
 			}
 		}
 
-		close(rq.sendQueue)
+		close(rq.responseQ)
 	}()
 
-	return rq.receiveQueue, rq.sendQueue, rq.errQueue
+	return rq.requestQ, rq.responseQ, rq.errQueue
 }
 
 func NewRequestQueue(config QueueWorkerConfig) *QueueWorker {
 	return &QueueWorker{
-		receiveQueue: make(chan ReuqestParameters, config.MaxConcurrentRequests),
-		sendQueue:    make(chan CustomResponse, config.MaxConcurrentRequests),
-		errQueue:     make(chan error, config.MaxConcurrentRequests),
+		errQueue:  make(chan error, config.MaxConcurrentRequests),
+		requestQ:  make(chan RequestParameters, config.MaxConcurrentRequests),
+		responseQ: make(chan CustomResponse, config.MaxConcurrentRequests),
 
 		QueueWorkerConfig: config,
 	}

@@ -9,19 +9,20 @@ import (
 	"github.com/edpryk/buter/lib/stability"
 )
 
-func AsyncRequestWitnRetry(parameters ReuqestParameters, retries int, delay int) (<-chan CustomResponse, <-chan error) {
-	resCh := make(chan CustomResponse)
-	errCh := make(chan error)
+func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int) (<-chan CustomResponse, <-chan error) {
+	resCh := make(chan CustomResponse, 1)
+	errCh := make(chan error, 1)
 
 	go func() {
-		requstCaller := func() (any, error) {
+		requestCaller := func() (any, error) {
 			reader := strings.NewReader(parameters.Body.String())
 
-			// TODO: move to seprated func
+			// TODO: move to separated func
 			defaultHeaders := make(map[string]string)
 
 			if parameters.Method == http.MethodPost {
 				defaultHeaders["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body.String()))
+				defaultHeaders["Content-Type"] = "application/json"
 			}
 
 			for key := range parameters.Header {
@@ -36,8 +37,7 @@ func AsyncRequestWitnRetry(parameters ReuqestParameters, retries int, delay int)
 			)
 		}
 		startTime := time.Now()
-		res, err := stability.Retry(requstCaller, retries, delay)
-
+		res, err := stability.Retry(requestCaller, retries, delay)
 		if err != nil {
 			errCh <- err
 		} else {

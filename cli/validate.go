@@ -13,7 +13,7 @@ var (
 	errMethodGetAndBodyUsage = errors.New("Cannot user method GET when Body provided")
 )
 
-func validateInput(in Input) error {
+func validateInput(in *UserConfig) error {
 	if in.AttackType == "" {
 		return errNoAttackType
 	}
@@ -23,11 +23,17 @@ func validateInput(in Input) error {
 	if in.Url == "" {
 		return errNoUrl
 	}
-	if len(in.PayloadFiles) == 0 {
+	if len(in.PayloadFiles) == 0 && in.AttackType != DOSAttack {
 		return errNoPayloads
 	}
 	if len(in.Body.String()) > 2 && in.Method == http.MethodGet {
 		return errMethodGetAndBodyUsage
+	}
+	if in.DosRequest < in.MaxConcurrent {
+		in.MaxConcurrent = in.DosRequest
+	}
+	if in.AttackType == DOSAttack && in.Delay == defaultDelay {
+		in.Delay = 0
 	}
 
 	return nil
