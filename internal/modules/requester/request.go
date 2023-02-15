@@ -19,6 +19,7 @@ func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int)
 
 			// TODO: move to separated func
 			defaultHeaders := make(map[string]string)
+			defaultHeaders["Connection"] = "close"
 
 			if parameters.Method == http.MethodPost {
 				defaultHeaders["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body.String()))

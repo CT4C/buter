@@ -18,18 +18,16 @@ type Filters interface {
 }
 
 func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters Filters) {
+	counter := 0
+
 	for res := range responseQ {
-		// if res.StatusCode > 300 {
-		// 	continue
-		// }
-		report := fmt.Sprintf("%3s", "")
+		report := fmt.Sprintf("%3s Req: %7d", "", counter)
 
 		duration := res.Duration
-		// url := res.Request.URL
 		code := res.StatusCode
 		payloads := ""
 		for number, p := range res.Payloads {
-			payloads += fmt.Sprintf("%-5sP_%d: %32s", " ", number+1, p)
+			payloads += fmt.Sprintf("%-2sP_%d: %21s", " ", number+1, p)
 		}
 
 		report += payloads
@@ -41,6 +39,7 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 		report += fmt.Sprintf("Duration %5dms", duration/time.Millisecond)
 
 		log.Println(report)
+		counter++
 	}
 }
 

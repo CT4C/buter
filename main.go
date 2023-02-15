@@ -60,7 +60,6 @@ func main() {
 	select {
 	case <-sigEnd:
 		log.Println("Closed by Interruption")
-		time.Sleep(1 * time.Second)
 	case <-attackCompletedSig:
 	}
 

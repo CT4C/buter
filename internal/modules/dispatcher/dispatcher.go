@@ -18,11 +18,12 @@ type Runner func(ctx context.Context, config AttackConfig)
 func DispatchAttack(attack string) (Runner, error) {
 	switch attack {
 	case cli.SniperAttack:
+		fallthrough
 	case cli.ClusterAttack:
 		return attackWithPayload, nil
 	case cli.DOSAttack:
 		return dosAttack, nil
 	}
 
-	return nil, errors.New("")
+	return nil, errors.New("Attack not supported")
 }
