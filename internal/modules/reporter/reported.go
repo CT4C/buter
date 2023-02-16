@@ -18,7 +18,7 @@ type Filters interface {
 }
 
 func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters Filters) {
-	counter := 0
+	counter := 1
 
 	for res := range responseQ {
 		report := fmt.Sprintf("%3s Req: %7d", "", counter)
