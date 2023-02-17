@@ -6,7 +6,7 @@ type MapStringer[MapValue any] struct {
 	Value map[string]MapValue
 }
 
-func (ms MapStringer[any]) String() string {
+func (ms MapStringer[V]) String() string {
 	b, err := json.Marshal(ms.Value)
 	if err != nil {
 		return ""
@@ -15,7 +15,7 @@ func (ms MapStringer[any]) String() string {
 	return string(b)
 }
 
-func (ms MapStringer[any]) Map() map[string]any {
+func (ms MapStringer[V]) Map() map[string]V {
 	return ms.Value
 }
 

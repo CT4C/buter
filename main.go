@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -10,7 +9,7 @@ import (
 	"time"
 
 	"github.com/edpryk/buter/cli"
-	"github.com/edpryk/buter/internal/dispatcher"
+	"github.com/edpryk/buter/internal/runner"
 )
 
 var (
@@ -30,15 +29,10 @@ func main() {
 	attackStartTime := time.Now()
 
 	cli.PrintInfo()
-	fmt.Printf("%-10s %s\n", "Started:", attackStartTime.Format("15:04:05"))
 	config = cli.ParseFlags()
 
 	signal.Notify(sigEnd, syscall.SIGINT)
 	log.SetFlags(2)
-
-	/*
-		Need to test target connection before start
-	*/
 
 	if config.Timeout > 0 {
 		rootContext, cancelRootContext = context.WithTimeout(context.Background(), time.Duration(10*time.Second))
@@ -47,16 +41,9 @@ func main() {
 	}
 	defer cancelRootContext()
 
-	attackRunner, err := dispatcher.DispatchAttack(config.AttackType)
-	if err != nil {
-		fmt.Println(err)
-		cancelRootContext()
-		os.Exit(1)
-	}
-
-	go attackRunner(rootContext, dispatcher.AttackConfig{
-		UserConfig:         config,
+	go runner.RunAttack(rootContext, runner.AttackConfig{
 		AttackCompletedSig: attackCompletedSig,
+		UserConfig:         config,
 	})
 
 	select {

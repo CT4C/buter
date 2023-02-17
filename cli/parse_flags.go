@@ -21,7 +21,7 @@ type UserConfig struct {
 	Filters
 	Headers
 	PayloadFiles
-	Body *Body
+	Body Body
 }
 
 /*
@@ -32,7 +32,7 @@ and exits process
 */
 func ParseFlags() UserConfig {
 	UserConfig := &UserConfig{
-		Body: &Body{},
+		Body: Body{},
 		Filters: Filters{
 			"length": make([]int, 0),
 			"status": make([]int, 0),
@@ -51,7 +51,7 @@ func ParseFlags() UserConfig {
 	flag.IntVar(&UserConfig.Delay, delayFlag, defaultDelay, delayUsage)
 	flag.IntVar(&UserConfig.RetryDelay, retriesDelayFlag, defaultRetryDelay, retryDelayUsage)
 	flag.IntVar(&UserConfig.Retries, retriesAmountFlag, defaultRetriesAmount, retriesAmountUsage)
-	flag.Var(UserConfig.Body, bodyFlag, bodyUsage)
+	flag.Var(&UserConfig.Body, bodyFlag, bodyUsage)
 	flag.IntVar(&UserConfig.Timeout, timeoutFlag, defaultTimeout, timeoutUsage)
 	flag.IntVar(&UserConfig.DosRequest, dosRequestsFlag, defaultDosRequests, timeoutUsage)
 	flag.Var(&UserConfig.Filters, filterOutFlag, filterOutUsage)

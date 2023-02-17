@@ -1,13 +1,13 @@
-package payloader
+package buter
 
 type PayloadNode struct {
 	Points            [2]int
 	Number            int
-	PayloadList       []string
-	CurrentPayloadIdx int
 	NextNode          *PayloadNode
+	PayloadList       []string
 	PreviousNode      *PayloadNode
 	WorkingPayload    string
+	CurrentPayloadIdx int
 }
 
 /*
