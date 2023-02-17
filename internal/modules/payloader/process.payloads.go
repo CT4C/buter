@@ -21,8 +21,8 @@ func processPayloads(value string, payloadNode *PayloadNode, workingPayloadsSet 
 			the workinPayloadSet slice, and last values will change
 			when a clinet will read from consumer
 		*/
-		workinPayloadCopy := make([]string, len(workingPayloadsSet))
-		copy(workinPayloadCopy, workingPayloadsSet)
+		workingPayloadCopy := make([]string, len(workingPayloadsSet))
+		copy(workingPayloadCopy, workingPayloadsSet)
 
 		/*
 			1. Send to channel
@@ -32,7 +32,7 @@ func processPayloads(value string, payloadNode *PayloadNode, workingPayloadsSet 
 		payloadConsumer <- CraftedPayload{
 			Url:      parsedAttackValue.Url,
 			Headers:  parsedAttackValue.Headers,
-			Payloads: workinPayloadCopy,
+			Payloads: workingPayloadCopy,
 			Body:     parsedAttackValue.Body,
 		}
 		produced++

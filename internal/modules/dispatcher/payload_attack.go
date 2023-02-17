@@ -39,14 +39,14 @@ func attackWithPayload(ctx context.Context, config AttackConfig) {
 
 	payloadProvider, _ := Payloader.PrepareAttack()
 
-	requestQueueWorker := requester.NewRequestQueue(requester.QueueWorkerConfig{
+	requestWorker := requester.NewRequestQueue(requester.QueueWorkerConfig{
 		MaxConcurrentRequests: config.MaxConcurrent,
 		Ctx:                   ctx,
 		Delay:                 config.Delay,
 		Retries:               config.Retries,
 	})
 
-	requestConsumer, responseProvider, _ := requestQueueWorker.Run()
+	requestConsumer, responseProvider, _ := requestWorker.Run()
 	reporter := reporter.New()
 
 	wg.Add(1)

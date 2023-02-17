@@ -12,7 +12,7 @@ import (
 func dosAttack(ctx context.Context, config AttackConfig) {
 	wg := &sync.WaitGroup{}
 
-	worker := requester.NewRequestQueue(requester.QueueWorkerConfig{
+	requestWorker := requester.NewRequestQueue(requester.QueueWorkerConfig{
 		Ctx:                   ctx,
 		Delay:                 config.Delay,
 		Retries:               config.Retries,
@@ -20,7 +20,7 @@ func dosAttack(ctx context.Context, config AttackConfig) {
 		MaxConcurrentRequests: config.MaxConcurrent,
 	})
 	reporter := reporter.New()
-	consumer, provider, _ := worker.Run()
+	consumer, provider, _ := requestWorker.Run()
 
 	wg.Add(1)
 	go func(ctx context.Context, config cli.UserConfig) {
