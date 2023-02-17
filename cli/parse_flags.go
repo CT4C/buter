@@ -60,7 +60,7 @@ func ParseFlags() UserConfig {
 	flag.Parse()
 
 	if err := validateInput(UserConfig); err != nil {
-		fmt.Println("Flags error:", err.Error())
+		fmt.Printf("%-10s %s\n", "Error:", err.Error())
 		printUsage()
 		os.Exit(0)
 	}

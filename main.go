@@ -30,7 +30,7 @@ func main() {
 	attackStartTime := time.Now()
 
 	cli.PrintInfo()
-	fmt.Printf("%-10s %s\n", "Started", attackStartTime.Format("hh:mm:ss"))
+	fmt.Printf("%-10s %s\n", "Started:", attackStartTime.Format("15:04:05"))
 	config = cli.ParseFlags()
 
 	signal.Notify(sigEnd, syscall.SIGINT)
