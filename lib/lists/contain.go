@@ -1,6 +1,6 @@
 package lists
 
-func In[V comparable](list []V, value V) bool {
+func Contain[V comparable](list []V, value V) bool {
 	exists := false
 
 	for _, v := range list {

@@ -1,15 +1,13 @@
 package prepare
 
-import (
-	"github.com/edpryk/buter/utils/files"
-)
+import "github.com/edpryk/buter/lib/drive/files"
 
 func PreparePayloads(filenames []string) (totalPayloads int, payloadSet [][]string, err error) {
 	p := make([][]string, 0)
 	totalPayloads = 1
 
 	for _, filename := range filenames {
-		content, err := files.ReadFileByLine(filename)
+		content, err := files.ReadByLine(filename)
 		if err != nil {
 			return 0, p, err
 		}

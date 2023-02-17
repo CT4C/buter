@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/edpryk/buter/cli"
-	"github.com/edpryk/buter/internal/modules/dispatcher"
+	"github.com/edpryk/buter/internal/dispatcher"
 )
 
 var (
@@ -30,7 +30,7 @@ func main() {
 	attackStartTime := time.Now()
 
 	cli.PrintInfo()
-	fmt.Printf("%-10s %s\n", "Started", attackStartTime.Format("hh:mm:ss"))
+	fmt.Printf("%-10s %s\n", "Started:", attackStartTime.Format("15:04:05"))
 	config = cli.ParseFlags()
 
 	signal.Notify(sigEnd, syscall.SIGINT)
@@ -65,5 +65,5 @@ func main() {
 	case <-attackCompletedSig:
 	}
 
-	log.Printf("%3s Attack completed in %s\n", "", time.Now().Sub(attackStartTime))
+	log.Printf("%7s Attack completed in %s\n", "Summary:", time.Now().Sub(attackStartTime))
 }

@@ -14,6 +14,8 @@ var (
 	timeoutFlag       = "T"
 	dosRequestsFlag   = "R"
 	filterOutFlag     = "f"
+	stopFlag          = "S"
 )
 
 var knownFilters = []string{"status", "length"}
+var knownStoppers = []string{"status"}

@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/edpryk/buter/internal/helpers/lists"
-	"github.com/edpryk/buter/internal/modules/requester"
+	"github.com/edpryk/buter/internal/requester"
+	"github.com/edpryk/buter/lib/lists"
 )
 
 type Filters interface {
@@ -14,22 +14,26 @@ type Filters interface {
 	Length() []int
 }
 
+type Stopper interface {
+	Status() []int
+}
+
 type Reporter struct{}
 
-func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters Filters) {
+func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters Filters, stopper Stopper, sopSig chan int) {
 	counter := 0
 
 	for res := range responseQ {
 		counter++
 
 		if len(filters.Length()) > 0 {
-			if !lists.In(filters.Length(), int(res.ContentLength)) {
+			if !lists.Contain(filters.Length(), int(res.ContentLength)) {
 				continue
 			}
 		}
 
 		if len(filters.Status()) > 0 {
-			if !lists.In(filters.Status(), res.StatusCode) {
+			if !lists.Contain(filters.Status(), res.StatusCode) {
 				continue
 			}
 		}
@@ -50,6 +54,12 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 		report += fmt.Sprintf(" Length %5d", res.ContentLength)
 
 		log.Println(report)
+
+		if len(stopper.Status()) > 0 {
+			if lists.Contain(stopper.Status(), res.StatusCode) {
+				sopSig <- 1
+			}
+		}
 	}
 }
 
