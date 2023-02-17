@@ -18,7 +18,8 @@ var (
 	retryDelayUsage    = fmt.Sprintf("-%-3s %s %s", retriesDelayFlag, "1000", "(Retry delay in milliseconds)")
 	bodyUsage          = fmt.Sprintf("-%-3s %s %s", bodyFlag, "{\"email\":\"user_nameg@mail.com\",\"password\":\"12345\"}", "(request body)")
 	timeoutUsage       = fmt.Sprintf("-%-3s %s %s", timeoutFlag, "10", "(Request timeout in Seconds)")
-	dosReqUsage        = fmt.Sprintf("-%-3s %s %5s", dosRequestsFlag, "10", "(request amount in DOS mode)")
+	dosReqUsage        = fmt.Sprintf("-%-3s %s %s", dosRequestsFlag, "10", "(request amount in DOS mode)")
+	filterOutUsage     = fmt.Sprintf("-%-3s %s %s", filterOutFlag, "status:200,201;length:1553", "(Output filters)")
 )
 
 func printUsage() {
@@ -37,5 +38,6 @@ func printUsage() {
 	fmt.Printf("\t%s\n", bodyUsage)
 	fmt.Printf("\t%s\n", timeoutUsage)
 	fmt.Printf("\t%s\n", dosReqUsage)
+	fmt.Printf("\t%s\n", filterOutUsage)
 	fmt.Println()
 }

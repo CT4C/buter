@@ -17,6 +17,7 @@ type UserConfig struct {
 	Timeout       int
 	DosRequest    int
 
+	Filters
 	Headers
 	PayloadFiles
 	Body *Body
@@ -31,6 +32,10 @@ and exits process
 func ParseFlags() UserConfig {
 	UserConfig := &UserConfig{
 		Body: &Body{},
+		Filters: Filters{
+			"length": make([]int, 0),
+			"status": make([]int, 0),
+		},
 	}
 
 	flag.Var(&UserConfig.PayloadFiles, payloadFlag, payloadUsage)
@@ -45,6 +50,7 @@ func ParseFlags() UserConfig {
 	flag.Var(UserConfig.Body, bodyFlag, bodyUsage)
 	flag.IntVar(&UserConfig.Timeout, timeoutFlag, defaultTimeout, timeoutUsage)
 	flag.IntVar(&UserConfig.DosRequest, dosRequestsFlag, defaultDosRequests, timeoutUsage)
+	flag.Var(&UserConfig.Filters, filterOutFlag, filterOutUsage)
 
 	flag.Parse()
 

@@ -41,7 +41,7 @@ func dosAttack(ctx context.Context, config AttackConfig) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		reporter.StartWorker(provider, nil)
+		reporter.StartWorker(provider, config.Filters)
 	}()
 
 	wg.Wait()

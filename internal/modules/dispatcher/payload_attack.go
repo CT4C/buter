@@ -74,7 +74,7 @@ func attackWithPayload(ctx context.Context, config AttackConfig) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		reporter.StartWorker(responseProvider, nil)
+		reporter.StartWorker(responseProvider, config.Filters)
 	}()
 
 	wg.Wait()
