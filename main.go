@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/edpryk/buter/cli"
-	"github.com/edpryk/buter/internal/modules/dispatcher"
+	"github.com/edpryk/buter/internal/dispatcher"
 )
 
 var (
@@ -65,5 +65,5 @@ func main() {
 	case <-attackCompletedSig:
 	}
 
-	log.Printf("%3s Attack completed in %s\n", "", time.Now().Sub(attackStartTime))
+	log.Printf("%7s Attack completed in %s\n", "Summary:", time.Now().Sub(attackStartTime))
 }

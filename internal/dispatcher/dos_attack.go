@@ -5,8 +5,8 @@ import (
 	"sync"
 
 	"github.com/edpryk/buter/cli"
-	"github.com/edpryk/buter/internal/modules/reporter"
-	"github.com/edpryk/buter/internal/modules/requester"
+	"github.com/edpryk/buter/internal/reporter"
+	"github.com/edpryk/buter/internal/requester"
 )
 
 func dosAttack(ctx context.Context, config AttackConfig) {
@@ -41,7 +41,7 @@ func dosAttack(ctx context.Context, config AttackConfig) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		reporter.StartWorker(provider, config.Filters)
+		reporter.StartWorker(provider, config.Filters, config.Stop, config.AttackCompletedSig)
 	}()
 
 	wg.Wait()

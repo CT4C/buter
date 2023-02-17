@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-type Filters map[string]any
+type Stopper map[string]any
 
-func (f *Filters) Set(value string) error {
+func (f *Stopper) Set(value string) error {
 	filerSeparator := ";"
 	filterValueSeparator := ","
 	filterRegexp := regexp.MustCompile("([^:]+):(.+)")
@@ -24,16 +24,14 @@ func (f *Filters) Set(value string) error {
 
 		filterName := matched[1]
 
-		if strings.Contains(strings.Join(knownFilters, "/"), filterName) == false {
-			return fmt.Errorf("unknown filter %s", filterName)
+		if strings.Contains(strings.Join(knownStoppers, "/"), filterName) == false {
+			return fmt.Errorf("unknown stopper %s", filterName)
 		}
 
 		filterValue := strings.Split(matched[2], filterValueSeparator)
 
 		switch filterName {
-		case knownFilters[0]:
-			fallthrough
-		case knownFilters[1]:
+		case knownStoppers[0]:
 			for _, stringedInteger := range filterValue {
 				_, ok := (*f)[filterName]
 				if ok == false {
@@ -54,7 +52,7 @@ func (f *Filters) Set(value string) error {
 	return nil
 }
 
-func (f *Filters) String() string {
+func (f *Stopper) String() string {
 	b, err := json.Marshal(*f)
 	if err != nil {
 		panic(err)
@@ -63,10 +61,6 @@ func (f *Filters) String() string {
 	return string(b)
 }
 
-func (f Filters) Status() []int {
-	return f[knownFilters[0]].([]int)
-}
-
-func (f Filters) Length() []int {
-	return f[knownFilters[1]].([]int)
+func (f Stopper) Status() []int {
+	return f[knownStoppers[0]].([]int)
 }

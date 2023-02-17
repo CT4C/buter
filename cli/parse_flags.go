@@ -16,6 +16,7 @@ type UserConfig struct {
 	RetryDelay    int
 	Timeout       int
 	DosRequest    int
+	Stop          Stopper
 
 	Filters
 	Headers
@@ -36,6 +37,9 @@ func ParseFlags() UserConfig {
 			"length": make([]int, 0),
 			"status": make([]int, 0),
 		},
+		Stop: Stopper{
+			"status": make([]int, 0),
+		},
 	}
 
 	flag.Var(&UserConfig.PayloadFiles, payloadFlag, payloadUsage)
@@ -51,6 +55,7 @@ func ParseFlags() UserConfig {
 	flag.IntVar(&UserConfig.Timeout, timeoutFlag, defaultTimeout, timeoutUsage)
 	flag.IntVar(&UserConfig.DosRequest, dosRequestsFlag, defaultDosRequests, timeoutUsage)
 	flag.Var(&UserConfig.Filters, filterOutFlag, filterOutUsage)
+	flag.Var(&UserConfig.Stop, stopFlag, stopUsage)
 
 	flag.Parse()
 

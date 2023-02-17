@@ -10,9 +10,9 @@ import (
 
 	"github.com/edpryk/buter/internal/helpers/prepare"
 	"github.com/edpryk/buter/internal/helpers/transform"
-	"github.com/edpryk/buter/internal/modules/payloader"
-	"github.com/edpryk/buter/internal/modules/reporter"
-	"github.com/edpryk/buter/internal/modules/requester"
+	"github.com/edpryk/buter/internal/payloader"
+	"github.com/edpryk/buter/internal/reporter"
+	"github.com/edpryk/buter/internal/requester"
 	"github.com/edpryk/buter/lib/transport"
 )
 
@@ -74,7 +74,7 @@ func attackWithPayload(ctx context.Context, config AttackConfig) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		reporter.StartWorker(responseProvider, config.Filters)
+		reporter.StartWorker(responseProvider, config.Filters, config.Stop, config.AttackCompletedSig)
 	}()
 
 	wg.Wait()

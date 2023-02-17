@@ -20,6 +20,7 @@ var (
 	timeoutUsage       = fmt.Sprintf("-%-3s %s %s", timeoutFlag, "10", "(Request timeout in Seconds)")
 	dosReqUsage        = fmt.Sprintf("-%-3s %s %s", dosRequestsFlag, "10", "(request amount in DOS mode)")
 	filterOutUsage     = fmt.Sprintf("-%-3s %s %s", filterOutFlag, "status:200,201;length:1553", "(Output filters)")
+	stopUsage          = fmt.Sprintf("-%-3s %s %s", stopFlag, "status:200", "(Stop attack on event)")
 )
 
 func printUsage() {
@@ -39,5 +40,6 @@ func printUsage() {
 	fmt.Printf("\t%s\n", timeoutUsage)
 	fmt.Printf("\t%s\n", dosReqUsage)
 	fmt.Printf("\t%s\n", filterOutUsage)
+	fmt.Printf("\t%s\n", stopUsage)
 	fmt.Println()
 }

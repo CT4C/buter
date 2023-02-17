@@ -17,9 +17,9 @@ func processPayloads(value string, payloadNode *PayloadNode, workingPayloadsSet 
 		payloadNode.CurrentPayloadIdx += 1
 		payloadNode.Points[1] = payloadNode.Points[0] + len(payload)
 		/*
-			Because in another situatino chanel has a pointer to
-			the workinPayloadSet slice, and last values will change
-			when a clinet will read from consumer
+			Because in another situation chanel has a pointer to
+			the workingPayloadSet slice, and last values will change
+			when a client will read from consumer
 		*/
 		workingPayloadCopy := make([]string, len(workingPayloadsSet))
 		copy(workingPayloadCopy, workingPayloadsSet)
