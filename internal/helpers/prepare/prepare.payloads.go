@@ -6,6 +6,10 @@ func PreparePayloads(filenames []string) (totalPayloads int, payloadSet [][]stri
 	p := make([][]string, 0)
 	totalPayloads = 1
 
+	if len(filenames) == 0 {
+		return 0, p, nil
+	}
+
 	for _, filename := range filenames {
 		content, err := files.ReadByLine(filename)
 		if err != nil {

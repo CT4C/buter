@@ -35,7 +35,7 @@ func (h *Headers) Set(value string) error {
 	return nil
 }
 
-func (h *Headers) String() string {
+func (h Headers) String() string {
 	dataB, err := json.Marshal(h)
 	if err != nil {
 		return "-"
@@ -63,7 +63,7 @@ func (b *Body) Set(value string) error {
 	return nil
 }
 
-func (b *Body) String() string {
+func (b Body) String() string {
 	dataB, err := json.Marshal(b)
 	if err != nil {
 		return "-"

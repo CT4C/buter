@@ -1,19 +1,19 @@
-package payloader
+package buter
 
 import (
 	"context"
 )
 
 type Cluster struct {
-	AttackValue       string
 	Ctx               context.Context
+	endSig            chan int
 	EntryNode         *PayloadNode
-	TotalPayloads     int
-	proceededPayloads int
 	errChanel         chan error
+	AttackValue       string
+	TotalPayloads     int
 	PositionsAmount   int
 	workingPayloadSet []string
-	endSig            chan int
+	proceededPayloads int
 }
 
 func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
@@ -21,7 +21,7 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 		c.endSig <- 0
 	}()
 	/*
-		TODO: Miss when one payloader grater the another one
+		TODO: Miss when one payload grater the another one
 	*/
 	defer close(c.errChanel)
 
@@ -37,16 +37,16 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
 
 		if c.EntryNode.NextNode == nil {
-			producedPayloads := processPayloads(updatedAttackValue, c.EntryNode, c.workingPayloadSet, payloadConsumer)
+			producedPayloads := proceedPayloads(updatedAttackValue, c.EntryNode, c.workingPayloadSet, payloadConsumer)
 
 			/*
-				1. Increment previous paylaod index
+				1. Increment previous payload index
 				2. set next c.EntryNode to previous one
 			*/
 			/*
 				TODO: Need to add functionality to the linked list
-				like as BackPrevioudNode/StepBack/Return/Forwared/Next
-				for movind back/forward btw nodes
+				like as BackPreviousNode/StepBack/Return/Forwarded/Next
+				for moving back/forward btw nodes
 			*/
 			c.proceededPayloads += producedPayloads
 			c.EntryNode.CurrentPayloadIdx = 0
@@ -54,30 +54,30 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 			c.EntryNode.CurrentPayloadIdx += 1
 			c.workingPayloadSet = make([]string, c.PositionsAmount)
 		} else {
-			// ### TOP level paylaod processing ###
+			// ### TOP level payload processing ###
 			c.workingPayloadSet[c.EntryNode.Number] = c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
 
 			/*
-				IF current payloader index == payloader list length (IS END)
+				IF current payload index == payload list length (IS END)
 				1. set next c.EntryNode to previous one
-				2. reset current payloader index
-				3. Incremetn Previous payloader index ?
+				2. reset current payload index
+				3. Increment Previous payload index ?
 			*/
 
 			isEndOfCurrentPayloadProcessing := c.EntryNode.CurrentPayloadIdx == len(c.EntryNode.PayloadList)
 
 			if isEndOfCurrentPayloadProcessing {
 				/*
-					Reset current payloader index before beign go to
+					Reset current payload index before being go to
 					the next in set
 				*/
 				c.EntryNode.CurrentPayloadIdx = 0
 				/*
-					Set previous payloader to the current one
+					Set previous payload to the current one
 				*/
 				c.EntryNode = c.EntryNode.PreviousNode
 				/*
-					Increment working payloader index
+					Increment working payload index
 				*/
 				c.EntryNode.CurrentPayloadIdx += 1
 			}
@@ -86,7 +86,7 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 			nextPayload := c.EntryNode.PayloadList[c.EntryNode.CurrentPayloadIdx]
 
 			/*
-				Points correction - when one payloader
+				Points correction - when one payload
 				length greater then another one
 			*/
 			if len(c.EntryNode.WorkingPayload) < len(nextPayload) {
@@ -107,10 +107,10 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 			*/
 			c.EntryNode.Points[1] = c.EntryNode.Points[0] + len(c.EntryNode.WorkingPayload)
 			/*
-				Defined payloader correction, check if it exists yet
+				Defined payload correction, check if it exists yet
 				found and update points, if it doesn't exists that's
 				mean that all defined pattern already in substitute
-				process wihtin payloads from lists
+				process within payloads from lists
 			*/
 			positions := rePayloadPosition.FindAllStringSubmatchIndex(updatedAttackValue, -1)
 			if len(positions) > 0 {
@@ -122,7 +122,7 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 				Added working payload to working payload set
 			*/
 			/*
-				Copy created becuase it was lose fo pointer to the
+				Copy created because it was lose fo pointer to the
 				EntryNode
 			*/
 			currentNodeCopy := *c.EntryNode
@@ -138,17 +138,17 @@ func (c Cluster) Proceeded() int {
 	return c.proceededPayloads
 }
 
-func NewCluster(ctx context.Context, attackValue string, entryNode *PayloadNode, totalPyaloads int, positionsAmount int) *Cluster {
+func NewCluster(ctx context.Context, attackValue string, entryNode *PayloadNode, totalPayloads int, positionsAmount int) *Cluster {
 	return &Cluster{
 		Ctx:             ctx,
 		AttackValue:     attackValue,
 		EntryNode:       entryNode,
-		TotalPayloads:   totalPyaloads,
+		TotalPayloads:   totalPayloads,
 		PositionsAmount: positionsAmount,
 		/*
-			Using unbuff channles in synchronous code causes deadlock,
+			Using unbuff channels in synchronous code causes deadlock,
 			because runtime is blocked in the place where you send the
-			value to a chnnel, til someone else read the value, but in
+			value to a chanel, til someone else read the value, but in
 			synchronous code, no one else can't read in the same time
 		*/
 		errChanel:         make(chan error, 1),

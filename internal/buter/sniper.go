@@ -1,12 +1,14 @@
-package payloader
+package buter
 
-import "context"
+import (
+	"context"
+)
 
 type Sniper struct {
-	producedPayloads  int
-	payloadNode       *PayloadNode
 	ctx               context.Context
+	payloadNode       *PayloadNode
 	attackValue       string
+	producedPayloads  int
 	workingPayloadSet []string
 }
 
@@ -21,7 +23,7 @@ func (s *Sniper) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 	}()
 	defer close(payloadConsumer)
 
-	s.producedPayloads += processPayloads(s.attackValue, s.payloadNode, s.workingPayloadSet, payloadConsumer)
+	s.producedPayloads += proceedPayloads(s.attackValue, s.payloadNode, s.workingPayloadSet, payloadConsumer)
 
 	return endChan
 }
