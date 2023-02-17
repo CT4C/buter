@@ -7,21 +7,7 @@ import (
 	"strings"
 )
 
-// func ReadFiles(files []string) ([][]string, error) {
-// 	payloads := make([][]string, len(files))
-
-// 	for _, filename := range files {
-// 		content, err := ReadFile(filename)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		payloads = append(payloads, content)
-// 	}
-
-// 	return payloads, nil
-// }
-
-func ReadFileByLine(filename string) ([]string, error) {
+func ReadByLine(filename string) ([]string, error) {
 
 	_, err := os.Stat(filename)
 	if err != nil {
