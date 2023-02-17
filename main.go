@@ -27,6 +27,8 @@ var (
 )
 
 func main() {
+	cli.PrintInfo()
+	config = cli.ParseFlags()
 	attackStartTime := time.Now()
 
 	signal.Notify(sigEnd, syscall.SIGINT)
@@ -35,8 +37,6 @@ func main() {
 	/*
 		Need to test target connection before start
 	*/
-
-	config = cli.ParseFlags()
 
 	if config.Timeout > 0 {
 		rootContext, cancelRootContext = context.WithTimeout(context.Background(), time.Duration(10*time.Second))
@@ -59,7 +59,7 @@ func main() {
 
 	select {
 	case <-sigEnd:
-		log.Println("Closed by Interruption")
+		log.Printf("%3s Closed by Interruption\n", "")
 	case <-attackCompletedSig:
 	}
 
