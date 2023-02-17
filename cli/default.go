@@ -12,4 +12,5 @@ var (
 	defaultBody          = ""
 	defaultTimeout       = 0
 	defaultDosRequests   = 10
+	defaultFilters       = "NotSet"
 )

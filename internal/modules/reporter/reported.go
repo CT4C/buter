@@ -5,23 +5,36 @@ import (
 	"log"
 	"time"
 
+	"github.com/edpryk/buter/internal/helpers/lists"
 	"github.com/edpryk/buter/internal/modules/requester"
 )
 
-type Reporter struct{}
-
 type Filters interface {
-	Url() bool
-	Status() bool
-	Length() bool
-	Duration() bool
+	Status() []int
+	Length() []int
 }
 
+type Reporter struct{}
+
 func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters Filters) {
-	counter := 1
+	counter := 0
 
 	for res := range responseQ {
-		report := fmt.Sprintf("%3s Req: %7d", "", counter)
+		counter++
+
+		if len(filters.Length()) > 0 {
+			if !lists.In(filters.Length(), int(res.ContentLength)) {
+				continue
+			}
+		}
+
+		if len(filters.Status()) > 0 {
+			if !lists.In(filters.Status(), res.StatusCode) {
+				continue
+			}
+		}
+
+		report := fmt.Sprintf("%-3s %7d", "Req:", counter)
 
 		duration := res.Duration
 		code := res.StatusCode
@@ -32,14 +45,11 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 
 		report += payloads
 
-		if filters != nil {
-		}
-
-		report += fmt.Sprintf("%1sStatus %-5d", " ", code)
+		report += fmt.Sprintf(" Status %-5d", code)
 		report += fmt.Sprintf("Duration %5dms", duration/time.Millisecond)
+		report += fmt.Sprintf(" Length %5d", res.ContentLength)
 
 		log.Println(report)
-		counter++
 	}
 }
 

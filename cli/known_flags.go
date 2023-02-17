@@ -13,4 +13,7 @@ var (
 	bodyFlag          = "b"
 	timeoutFlag       = "T"
 	dosRequestsFlag   = "R"
+	filterOutFlag     = "f"
 )
+
+var knownFilters = []string{"status", "length"}

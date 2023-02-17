@@ -47,7 +47,9 @@ func (h *Headers) String() string {
 type Body map[string]string
 
 func (b *Body) Set(value string) error {
-	*b = make(map[string]string)
+	if b == nil {
+		*b = make(map[string]string)
+	}
 
 	if len(value) == 0 {
 		b = nil

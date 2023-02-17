@@ -27,9 +27,11 @@ var (
 )
 
 func main() {
-	cli.PrintInfo()
-	config = cli.ParseFlags()
 	attackStartTime := time.Now()
+
+	cli.PrintInfo()
+	fmt.Printf("%-10s %s\n", "Started", attackStartTime.Format("hh:mm:ss"))
+	config = cli.ParseFlags()
 
 	signal.Notify(sigEnd, syscall.SIGINT)
 	log.SetFlags(2)
