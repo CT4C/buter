@@ -9,6 +9,12 @@ import (
 	"github.com/edpryk/buter/lib/stability"
 )
 
+var defaultHeaders = map[string]string{
+	"Content-Type": "application/json",
+	// Set diff in DOS mode
+	"Connection": "close",
+}
+
 func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int) (<-chan CustomResponse, <-chan error) {
 	resCh := make(chan CustomResponse, 1)
 	errCh := make(chan error, 1)
@@ -17,13 +23,8 @@ func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int)
 		requestCaller := func() (any, error) {
 			reader := strings.NewReader(parameters.Body.String())
 
-			// TODO: move to separated func
-			defaultHeaders := make(map[string]string)
-			defaultHeaders["Connection"] = "close"
-
 			if parameters.Method == http.MethodPost {
 				defaultHeaders["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body.String()))
-				defaultHeaders["Content-Type"] = "application/json"
 			}
 
 			for key := range parameters.Header {

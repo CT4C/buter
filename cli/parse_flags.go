@@ -40,7 +40,7 @@ func ParseFlags() UserConfig {
 	flag.IntVar(&UserConfig.MaxConcurrent, threadsFlag, defaultThreads, threadsUsage)
 	flag.Var(&UserConfig.Headers, headersFlag, headersUsage)
 	flag.IntVar(&UserConfig.Delay, delayFlag, defaultDelay, delayUsage)
-	flag.IntVar(&UserConfig.RetryDelay, retriesDelayFlag, defaultRetryDelay, retriyDelayUsage)
+	flag.IntVar(&UserConfig.RetryDelay, retriesDelayFlag, defaultRetryDelay, retryDelayUsage)
 	flag.IntVar(&UserConfig.Retries, retriesAmountFlag, defaultRetriesAmount, retriesAmountUsage)
 	flag.Var(UserConfig.Body, bodyFlag, bodyUsage)
 	flag.IntVar(&UserConfig.Timeout, timeoutFlag, defaultTimeout, timeoutUsage)
@@ -49,9 +49,9 @@ func ParseFlags() UserConfig {
 	flag.Parse()
 
 	if err := validateInput(UserConfig); err != nil {
-		fmt.Println(err.Error())
-		flag.Usage()
-		os.Exit(1)
+		fmt.Println("Flags error:", err.Error())
+		printUsage()
+		os.Exit(0)
 	}
 
 	if UserConfig.Delay <= 0 {

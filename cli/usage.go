@@ -2,20 +2,40 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
 var (
-	urlUsage           = "-u <http://localhost?param1=!abc!&param_N=!efg!> (payload wrapped into '!' char) (Url) "
-	payloadUsage       = "-p <payload-file_1> -p <payload-file_N> (Payload)"
-	attackTypeUsage    = fmt.Sprintf("%s <%s> (AttackType)", "-a", strings.Join([]string{ClusterAttack, SniperAttack}, "/"))
-	threadsUsage       = "-t 5 (Max Concurrent Threads) "
-	headersUsage       = "-h '{ \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/99.1\" }' (Headers) "
-	delayUsage         = fmt.Sprintf("%s (Delay In Milliseconds)", "-d 800 ")
-	methodUsage        = fmt.Sprintf("%s (Method)", "-m get")
-	retriesAmountUsage = "-r 3"
-	retriyDelayUsage   = "-rd 1000"
-	bodyUsage          = "{\"email\":\"user_nameg@mail.com\",\"password\":\"12345\"}"
-	timeoutUsage       = "-T 10 (in Seconds)"
-	dosReqUsage        = "-R 10"
+	urlUsage           = fmt.Sprintf("-%-3s %s %s", urlFlag, "<http://localhost?param1=!abc!&param_N=!efg!>", "(Url)")
+	payloadUsage       = fmt.Sprintf("-%-3s %s %s", payloadFlag, "<payload-file_1> -p <payload-file_N>", "(Payload)")
+	attackTypeUsage    = fmt.Sprintf("-%-3s %s %s", attackTypeFlag, strings.Join([]string{ClusterAttack, SniperAttack, DOSAttack}, "/"), "(AttackType)")
+	threadsUsage       = fmt.Sprintf("-%-3s %s %s", threadsFlag, "5", "(Max Concurrent Threads)")
+	headersUsage       = fmt.Sprintf("-%-3s %s %s", headersFlag, "'{ \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/99.1\" }'", "(Headers)")
+	delayUsage         = fmt.Sprintf("-%-3s %s %s", delayFlag, "800", "(Delay in milliseconds)")
+	methodUsage        = fmt.Sprintf("-%-3s %s %s", methodFlag, "POST", "(HTTP method)")
+	retriesAmountUsage = fmt.Sprintf("-%-3s %s %s", retriesAmountFlag, "3", "(Retries on request error)")
+	retryDelayUsage    = fmt.Sprintf("-%-3s %s %s", retriesDelayFlag, "1000", "(Retry delay in milliseconds)")
+	bodyUsage          = fmt.Sprintf("-%-3s %s %s", bodyFlag, "{\"email\":\"user_nameg@mail.com\",\"password\":\"12345\"}", "(request body)")
+	timeoutUsage       = fmt.Sprintf("-%-3s %s %s", timeoutFlag, "10", "(Request timeout in Seconds)")
+	dosReqUsage        = fmt.Sprintf("-%-3s %s %5s", dosRequestsFlag, "10", "(request amount in DOS mode)")
 )
+
+func printUsage() {
+	fmt.Println()
+	fmt.Printf("Usage: %s\n", os.Args[0])
+	fmt.Printf("\t%s\n\n", "Any payload/fuzzing position must be highlighted with ! char")
+	fmt.Printf("\t%s\n", urlUsage)
+	fmt.Printf("\t%s\n", payloadUsage)
+	fmt.Printf("\t%s\n", attackTypeUsage)
+	fmt.Printf("\t%s\n", threadsUsage)
+	fmt.Printf("\t%s\n", headersUsage)
+	fmt.Printf("\t%s\n", delayUsage)
+	fmt.Printf("\t%s\n", methodUsage)
+	fmt.Printf("\t%s\n", retriesAmountUsage)
+	fmt.Printf("\t%s\n", retryDelayUsage)
+	fmt.Printf("\t%s\n", bodyUsage)
+	fmt.Printf("\t%s\n", timeoutUsage)
+	fmt.Printf("\t%s\n", dosReqUsage)
+	fmt.Println()
+}
