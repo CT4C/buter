@@ -1,6 +1,8 @@
 package buter
 
 import (
+	"fmt"
+
 	"github.com/edpryk/buter/internal/helpers/prepare"
 )
 
@@ -28,6 +30,9 @@ func proceedPayloads(value string, payloadNode *PayloadNode, workingPayloadsSet 
 			2. Increment proceeded payload
 		*/
 		parsedAttackValue, _ := prepare.ParseAttackValue(value)
+
+		fmt.Println(parsedAttackValue)
+
 		payloadConsumer <- CraftedPayload{
 			Url:      parsedAttackValue.Url,
 			Headers:  parsedAttackValue.Headers,

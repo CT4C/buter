@@ -77,6 +77,7 @@ func (b *Buter) RunPrepareAttack() (payloadProvider chan CraftedPayload, err cha
 			os.Exit(0)
 		}
 
+		// Order depends on flags ordering
 		attackValues := []string{b.Url, rawHeaders, rawBody}
 		attackValueString := strings.Join(attackValues, prepare.AttackValueSeparator)
 
