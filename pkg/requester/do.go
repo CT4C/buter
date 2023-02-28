@@ -2,7 +2,6 @@ package requester
 
 import (
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -23,7 +22,6 @@ func Do(method string, url string, headers map[string]string, body io.Reader) (h
 
 	res, err := client.Do(req)
 	if err != nil {
-		log.Println(err, method, url, headers, body)
 		return http.Response{}, err
 	}
 

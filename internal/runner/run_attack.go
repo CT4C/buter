@@ -12,8 +12,8 @@ import (
 	"github.com/edpryk/buter/internal/helpers/prepare"
 	"github.com/edpryk/buter/internal/helpers/transform"
 	"github.com/edpryk/buter/internal/reporter"
-	"github.com/edpryk/buter/internal/requester"
 	"github.com/edpryk/buter/lib/transport"
+	"github.com/edpryk/buter/pkg/requester"
 )
 
 type AttackConfig struct {

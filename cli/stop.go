@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
-type Stopper map[string]any
+type Stopper map[string][]string
 
 func (f *Stopper) Set(value string) error {
 	filerSeparator := ";"
@@ -35,15 +34,10 @@ func (f *Stopper) Set(value string) error {
 			for _, stringedInteger := range filterValue {
 				_, ok := (*f)[filterName]
 				if ok == false {
-					(*f)[filterName] = make([]int, 0)
+					(*f)[filterName] = make([]string, 0)
 				}
 
-				converted, err := strconv.Atoi(stringedInteger)
-				if err != nil {
-					return err
-				}
-
-				(*f)[filterName] = append((*f)[filterName].([]int), converted)
+				(*f)[filterName] = append((*f)[filterName], stringedInteger)
 			}
 		}
 
@@ -61,6 +55,6 @@ func (f *Stopper) String() string {
 	return string(b)
 }
 
-func (f Stopper) Status() []int {
-	return f[knownStoppers[0]].([]int)
+func (f Stopper) Status() []string {
+	return f[knownStoppers[0]]
 }
