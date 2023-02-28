@@ -5,40 +5,56 @@ import (
 	"log"
 	"time"
 
-	"github.com/edpryk/buter/internal/requester"
 	"github.com/edpryk/buter/lib/lists"
+	"github.com/edpryk/buter/pkg/requester"
 )
 
 type Filters interface {
-	Status() []int
-	Length() []int
+	Status() []string
+	Length() []string
+	Duration() []int
 }
 
 type Stopper interface {
-	Status() []int
+	Status() []string
+}
+
+/*
+	Apply interface
+*/
+type Response interface {
+	ContentLength() int
+	Status() int
+	Duration() time.Duration
 }
 
 type Reporter struct{}
 
 func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters Filters, stopper Stopper, sopSig chan int) {
-	counter := 0
+	requestNumber := 0
 
 	for res := range responseQ {
-		counter++
+		requestNumber++
 
 		if len(filters.Length()) > 0 {
-			if !lists.Contain(filters.Length(), int(res.ContentLength)) {
+			if lists.Contain(filters.Length(), fmt.Sprint(res.ContentLength)) {
 				continue
 			}
 		}
 
 		if len(filters.Status()) > 0 {
-			if !lists.Contain(filters.Status(), res.StatusCode) {
+			if lists.Contain(filters.Status(), fmt.Sprint(res.StatusCode)) {
 				continue
 			}
 		}
 
-		report := fmt.Sprintf("%-3s %7d", "Req:", counter)
+		if len(filters.Duration()) > 0 {
+			if !lists.IntGreaterEq(filters.Duration(), int(res.Duration.Milliseconds())) {
+				continue
+			}
+		}
+
+		report := fmt.Sprintf("%-3s %7d", "Req:", requestNumber)
 
 		duration := res.Duration
 		code := res.StatusCode
@@ -56,7 +72,7 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 		log.Println(report)
 
 		if len(stopper.Status()) > 0 {
-			if lists.Contain(stopper.Status(), res.StatusCode) {
+			if lists.Contain(stopper.Status(), fmt.Sprint(res.StatusCode)) {
 				sopSig <- 1
 			}
 		}

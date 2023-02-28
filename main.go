@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	config            cli.UserConfig
+	configs           []cli.UserConfig
 	payloadSet        [][]string
 	totalPayloads     int
 	rootContext       context.Context
@@ -27,30 +27,32 @@ var (
 
 func main() {
 	attackStartTime := time.Now()
+	configs = cli.ParseFlags()
 
 	cli.PrintInfo()
-	config = cli.ParseFlags()
 
 	signal.Notify(sigEnd, syscall.SIGINT)
 	log.SetFlags(2)
 
-	if config.Timeout > 0 {
-		rootContext, cancelRootContext = context.WithTimeout(context.Background(), time.Duration(10*time.Second))
-	} else {
-		rootContext, cancelRootContext = context.WithCancel(context.Background())
+	for _, config := range configs {
+		if config.Timeout > 0 {
+			rootContext, cancelRootContext = context.WithTimeout(context.Background(), time.Duration(10*time.Second))
+		} else {
+			rootContext, cancelRootContext = context.WithCancel(context.Background())
+		}
+		defer cancelRootContext()
+
+		go runner.RunAttack(rootContext, runner.AttackConfig{
+			AttackCompletedSig: attackCompletedSig,
+			UserConfig:         config,
+		})
+
+		select {
+		case <-sigEnd:
+			log.Printf("%3s Closed by Interruption\n", "")
+		case <-attackCompletedSig:
+		}
+
+		log.Printf("%7s Attack completed in %s\n", "Summary:", time.Now().Sub(attackStartTime))
 	}
-	defer cancelRootContext()
-
-	go runner.RunAttack(rootContext, runner.AttackConfig{
-		AttackCompletedSig: attackCompletedSig,
-		UserConfig:         config,
-	})
-
-	select {
-	case <-sigEnd:
-		log.Printf("%3s Closed by Interruption\n", "")
-	case <-attackCompletedSig:
-	}
-
-	log.Printf("%7s Attack completed in %s\n", "Summary:", time.Now().Sub(attackStartTime))
 }

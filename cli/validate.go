@@ -14,6 +14,10 @@ var (
 )
 
 func validateInput(in *UserConfig) error {
+	if in.ConfigFile != "" {
+		return nil
+	}
+
 	if in.AttackType == "" {
 		return errNoAttackType
 	}

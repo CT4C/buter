@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type Filters map[string]any
+type Filters map[string][]string
 
 func (f *Filters) Set(value string) error {
 	filerSeparator := ";"
@@ -37,15 +37,10 @@ func (f *Filters) Set(value string) error {
 			for _, stringedInteger := range filterValue {
 				_, ok := (*f)[filterName]
 				if ok == false {
-					(*f)[filterName] = make([]int, 0)
+					(*f)[filterName] = make([]string, 0)
 				}
 
-				converted, err := strconv.Atoi(stringedInteger)
-				if err != nil {
-					return err
-				}
-
-				(*f)[filterName] = append((*f)[filterName].([]int), converted)
+				(*f)[filterName] = append((*f)[filterName], stringedInteger)
 			}
 		}
 
@@ -63,10 +58,28 @@ func (f *Filters) String() string {
 	return string(b)
 }
 
-func (f Filters) Status() []int {
-	return f[knownFilters[0]].([]int)
+func (f Filters) Status() []string {
+	return f[knownFilters[0]]
 }
 
-func (f Filters) Length() []int {
-	return f[knownFilters[1]].([]int)
+func (f Filters) Length() []string {
+	return f[knownFilters[1]]
+}
+
+/*
+	TODO: Move converter to single pkg
+*/
+func (f Filters) Duration() []int {
+	d := f[knownFilters[2]]
+	i := make([]int, 0)
+
+	for _, filter := range d {
+		convertedInt, err := strconv.Atoi(filter)
+		if err != nil {
+			panic(err)
+		}
+		i = append(i, convertedInt)
+	}
+
+	return i
 }

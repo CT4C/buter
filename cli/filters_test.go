@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -13,8 +14,8 @@ func TestFilters(t *testing.T) {
 		// arrange
 		f := Filters{}
 		expected := Filters{}
-		expected["status"] = []int{http.StatusOK, http.StatusCreated}
-		expected["length"] = []int{1337}
+		expected["status"] = []string{fmt.Sprint(http.StatusOK), fmt.Sprint(http.StatusCreated)}
+		expected["length"] = []string{"1337"}
 		rawFilters := "status:200,201;length:1337"
 
 		// act
