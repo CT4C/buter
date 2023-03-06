@@ -40,8 +40,12 @@ func main() {
 		} else {
 			rootContext, cancelRootContext = context.WithCancel(context.Background())
 		}
-		defer cancelRootContext()
 
+		if config.Delay <= 0 {
+			config.Delay = 1
+		}
+
+		defer cancelRootContext()
 		go runner.RunAttack(rootContext, runner.AttackConfig{
 			AttackCompletedSig: attackCompletedSig,
 			UserConfig:         config,

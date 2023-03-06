@@ -5,7 +5,7 @@ import "context"
 type DosConfig struct {
 	Ctx         context.Context
 	Url         string
-	Body        map[string]string
+	Body        string
 	Headers     map[string]string
 	MaxRequests int
 }
@@ -40,7 +40,7 @@ func (d Dos) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 			}
 		}
 
-		close(payloadConsumer)
+		// close(payloadConsumer)
 		end <- 0
 	}()
 

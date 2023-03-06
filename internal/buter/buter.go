@@ -25,7 +25,7 @@ type Attacker interface {
 
 type CraftedPayload struct {
 	Url      string
-	Body     map[string]string
+	Body     string
 	Headers  map[string]string
 	Payloads []string
 }
@@ -33,7 +33,7 @@ type CraftedPayload struct {
 type Config struct {
 	Url           string
 	Ctx           context.Context
-	Body          map[string]string
+	Body          string
 	Headers       map[string]string
 	PayloadSet    [][]string
 	AttackType    string
@@ -71,14 +71,9 @@ func (b *Buter) RunPrepareAttack() (payloadProvider chan CraftedPayload, err cha
 			log.Println(err)
 			os.Exit(0)
 		}
-		rawBody, err := convert.ToString(b.Body)
-		if err != nil {
-			log.Println(err)
-			os.Exit(0)
-		}
 
 		// Order depends on flags ordering
-		attackValues := []string{b.Url, rawHeaders, rawBody}
+		attackValues := []string{b.Url, rawHeaders, b.Body}
 		attackValueString := strings.Join(attackValues, prepare.AttackValueSeparator)
 
 		totalPayloads, entryNode, err := transformPayload(attackValueString, b.PayloadSet)
@@ -95,6 +90,7 @@ func (b *Buter) RunPrepareAttack() (payloadProvider chan CraftedPayload, err cha
 			os.Exit(1)
 		}
 
+		// attacker close the channel
 		defer close(b.payloadProvider)
 
 		select {

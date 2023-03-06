@@ -15,10 +15,10 @@ func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int)
 
 	go func() {
 		requestCaller := func() (any, error) {
-			reader := strings.NewReader(parameters.Body.String())
+			reader := strings.NewReader(parameters.Body)
 
 			if parameters.Method == http.MethodPost {
-				parameters.Header["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body.String()))
+				parameters.Header["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body))
 			}
 
 			for key := range parameters.Header {
