@@ -28,7 +28,7 @@ type UserConfig struct {
 	Filters      `json:"filters"`
 	Headers      `json:"headers"`
 	PayloadFiles `json:"payloadFiles"`
-	Body         Body `json:"body"`
+	Body         string `json:"body"`
 }
 
 /*
@@ -39,7 +39,7 @@ and exits process
 */
 func ParseFlags() []UserConfig {
 	config := &UserConfig{
-		Body: Body{},
+		Body: "",
 		Filters: Filters{
 			"length": make([]string, 0),
 			"status": make([]string, 0),
@@ -47,6 +47,7 @@ func ParseFlags() []UserConfig {
 		Stop: Stopper{
 			"status": make([]string, 0),
 		},
+		Delay: defaultDelay,
 	}
 
 	flag.Var(&config.PayloadFiles, payloadFlag, payloadUsage)
@@ -60,7 +61,7 @@ func ParseFlags() []UserConfig {
 	flag.IntVar(&config.Delay, delayFlag, defaultDelay, delayUsage)
 	flag.IntVar(&config.RetryDelay, retriesDelayFlag, defaultRetryDelay, retryDelayUsage)
 	flag.IntVar(&config.Retries, retriesAmountFlag, defaultRetriesAmount, retriesAmountUsage)
-	flag.Var(&config.Body, bodyFlag, bodyUsage)
+	flag.StringVar(&config.Body, bodyFlag, "", bodyUsage)
 	flag.IntVar(&config.Timeout, timeoutFlag, defaultTimeout, timeoutUsage)
 	flag.IntVar(&config.DosRequest, dosRequestsFlag, defaultDosRequests, timeoutUsage)
 	flag.Var(&config.Filters, filterOutFlag, filterOutUsage)
@@ -90,10 +91,6 @@ func ParseFlags() []UserConfig {
 		batchConfig = configs
 	} else {
 		batchConfig = append(batchConfig, *config)
-	}
-
-	if config.Delay <= 0 {
-		config.Delay = 1
 	}
 
 	return batchConfig

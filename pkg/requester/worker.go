@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-type Stringer interface {
-	String() string
-}
-
 type QueueWorkerConfig struct {
 	Ctx                   context.Context
 	Delay                 int
@@ -27,7 +23,7 @@ type CustomResponse struct {
 
 type RequestParameters struct {
 	Url      string
-	Body     Stringer
+	Body     string
 	Method   string
 	Header   map[string]string
 	Payloads []string

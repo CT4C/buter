@@ -10,7 +10,6 @@ import (
 	"github.com/edpryk/buter/cli"
 	"github.com/edpryk/buter/internal/buter"
 	"github.com/edpryk/buter/internal/helpers/prepare"
-	"github.com/edpryk/buter/internal/helpers/transform"
 	"github.com/edpryk/buter/internal/reporter"
 	"github.com/edpryk/buter/lib/transport"
 	"github.com/edpryk/buter/pkg/requester"
@@ -20,6 +19,10 @@ type AttackConfig struct {
 	AttackCompletedSig chan int
 
 	cli.UserConfig
+}
+
+var headers = map[string]string{
+	"User-Agent": "unknown",
 }
 
 func RunAttack(ctx context.Context, config AttackConfig) {
@@ -39,11 +42,16 @@ func RunAttack(ctx context.Context, config AttackConfig) {
 		os.Exit(1)
 	}
 
+	// merge headers
+	for key := range config.Headers {
+		headers[key] = config.Headers[key]
+	}
+
 	Buter := buter.New(buter.Config{
 		Ctx:           ctx,
 		Url:           config.Url,
 		Body:          config.Body,
-		Headers:       config.Headers,
+		Headers:       headers,
 		PayloadSet:    payloadSet,
 		AttackType:    config.AttackType,
 		MaxRequests:   config.DosRequest,
@@ -65,7 +73,7 @@ func RunAttack(ctx context.Context, config AttackConfig) {
 					Method:   config.Method,
 					Header:   srcValue.Headers,
 					Payloads: srcValue.Payloads,
-					Body:     transform.NewMapStringer(srcValue.Body),
+					Body:     srcValue.Body,
 				}
 			},
 			time.Duration(0),
