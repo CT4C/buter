@@ -2,9 +2,9 @@ package cli
 
 import "fmt"
 
-const author = "https://github.com/0x640x720x650x640x64"
-const email = "https://github.com/0x640x720x650x640x64"
-const version = "0.0.1"
+const author = "Anonym"
+const email = "Anonym"
+const version = "0.0.2"
 
 func PrintInfo() {
 	fmt.Println()

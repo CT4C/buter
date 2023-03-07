@@ -36,7 +36,6 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 
 	for res := range responseQ {
 		requestNumber++
-
 		if len(filters.Length()) > 0 {
 			if lists.Contain(filters.Length(), fmt.Sprint(res.ContentLength)) {
 				continue

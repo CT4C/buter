@@ -38,6 +38,8 @@ print an error and usage
 and exits process
 */
 func ParseFlags() []UserConfig {
+	flag.Usage = printUsage
+
 	config := &UserConfig{
 		Body: "",
 		Filters: Filters{
