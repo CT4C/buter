@@ -3,6 +3,7 @@ package reporter
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/edpryk/buter/lib/lists"
@@ -54,20 +55,27 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 			}
 		}
 
-		report := fmt.Sprintf("%-3s %7d", "Req:", requestNumber)
-
 		duration := res.Duration
 		code := res.StatusCode
 		payloads := ""
+
 		for number, p := range res.Payloads {
 			payloads += fmt.Sprintf("%-2sP_%d: %21s", " ", number+1, p)
 		}
 
+		report := fmt.Sprintf("%-3s %7d", "Req:", requestNumber)
 		report += payloads
 
 		report += fmt.Sprintf(" Status %-5d", code)
 		report += fmt.Sprintf("Duration %5dms", duration/time.Millisecond)
 		report += fmt.Sprintf(" Length %5d", res.ContentLength)
+
+		if res.StatusCode == http.StatusFound {
+			loc, err := res.Location()
+			if err == nil {
+				report += fmt.Sprintf(" Location %5s", loc.Path)
+			}
+		}
 
 		log.Println(report)
 

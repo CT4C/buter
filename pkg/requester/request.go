@@ -21,10 +21,6 @@ func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int)
 				parameters.Header["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body))
 			}
 
-			for key := range parameters.Header {
-				parameters.Header[key] = parameters.Header[key]
-			}
-
 			return Do(
 				parameters.Method,
 				parameters.Url,
