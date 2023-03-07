@@ -15,13 +15,13 @@ var (
 type AttackValue struct {
 	Url     string
 	Headers map[string]string
-	Body    map[string]string
+	Body    string
 }
 
 func ParseAttackValue(value string) (AttackValue, error) {
 	attackValue := AttackValue{
 		Headers: make(map[string]string),
-		Body:    make(map[string]string),
+		Body:    "",
 	}
 
 	matchedValues := rePartsOfAttackValue.FindAllString(value, -1)
@@ -42,10 +42,7 @@ func ParseAttackValue(value string) (AttackValue, error) {
 	}
 
 	if len(matchedValues) > 2 {
-		rawBody := matchedValues[2]
-		if err := json.Unmarshal([]byte(rawBody), &attackValue.Body); err != nil {
-			return attackValue, err
-		}
+		attackValue.Body = matchedValues[2]
 	}
 
 	return attackValue, nil

@@ -2,6 +2,8 @@ package cli
 
 import (
 	"encoding/json"
+	"regexp"
+	"strings"
 )
 
 type PayloadFiles []string
@@ -22,49 +24,30 @@ func (ps *PayloadFiles) String() string {
 type Headers map[string]string
 
 func (h *Headers) Set(value string) error {
+	headerPattern := regexp.MustCompile("(?P<key>[^:]+):(.+)")
+
 	*h = make(map[string]string)
 
 	if len(value) == 0 {
 		return nil
 	}
 
-	if err := json.Unmarshal([]byte(value), h); err != nil {
-		return err
+	for _, subString := range strings.Split(value, " ") {
+		matched := headerPattern.FindAllStringSubmatch(subString, 1)
+		if matched != nil {
+			(*h)[matched[0][1]] = matched[0][2]
+		}
 	}
+
+	// if err := json.Unmarshal([]byte(value), h); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
 
 func (h Headers) String() string {
 	dataB, err := json.Marshal(h)
-	if err != nil {
-		return "-"
-	}
-
-	return string(dataB)
-}
-
-type Body map[string]string
-
-func (b *Body) Set(value string) error {
-	if b == nil {
-		*b = make(map[string]string)
-	}
-
-	if len(value) == 0 {
-		b = nil
-		return nil
-	}
-
-	if err := json.Unmarshal([]byte(value), b); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (b Body) String() string {
-	dataB, err := json.Marshal(b)
 	if err != nil {
 		return "-"
 	}

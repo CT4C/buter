@@ -10,7 +10,7 @@ func printConfigTemplate() {
 		{
 			Url:           defaultUrl,
 			Stop:          Stopper{},
-			Body:          Body{},
+			Body:          "",
 			Delay:         defaultDelay,
 			Method:        defaultMethod,
 			Filters:       Filters{},
