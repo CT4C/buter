@@ -43,41 +43,36 @@ func (lq *LimitedQueue) reNew() {
 func (lq *LimitedQueue) CLose() {}
 
 func (lq *LimitedQueue) Proceed() {
-	lq.wg.Add(1)
-	go func() {
-		defer lq.wg.Done()
+	ticker := time.NewTicker(time.Duration(lq.Delay) * time.Millisecond)
+	for parameters := range lq.requestsQ {
+		resCh, errCh := AsyncRequestWithRetry(parameters, lq.Retries, lq.RetryDelay)
 
-		ticker := time.NewTicker(time.Duration(lq.Delay) * time.Millisecond)
-		for parameters := range lq.requestsQ {
-			resCh, errCh := AsyncRequestWithRetry(parameters, lq.Retries, lq.RetryDelay)
-
-			lq.wg.Add(1)
-			go func() {
-				defer lq.wg.Done()
-
-				select {
-				case res := <-resCh:
-					lq.ResponseQ <- res
-					return
-				case err := <-errCh:
-					lq.ErrQ <- err
-					return
-				case <-lq.Ctx.Done():
-					log.Printf("Request Canceled\n")
-					return
-				}
-			}()
+		lq.wg.Add(1)
+		go func() {
+			defer lq.wg.Done()
 
 			select {
-			case <-lq.Ctx.Done():
-				log.Println("LimitedQ Canceled")
+			case res := <-resCh:
+				lq.ResponseQ <- res
 				return
-			case <-ticker.C:
+			case err := <-errCh:
+				lq.ErrQ <- err
+				return
+			case <-lq.Ctx.Done():
+				log.Printf("Request Canceled\n")
+				return
 			}
-		}
+		}()
 
-		ticker.Stop()
-	}()
+		select {
+		case <-lq.Ctx.Done():
+			log.Println("LimitedQ Canceled")
+			return
+		case <-ticker.C:
+		}
+	}
+
+	ticker.Stop()
 	lq.wg.Wait()
 }
 
