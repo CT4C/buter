@@ -1,6 +1,8 @@
 package buter
 
-import "context"
+import (
+	"context"
+)
 
 type DosConfig struct {
 	Ctx         context.Context
@@ -29,7 +31,6 @@ func (d Dos) Proceeded() int {
 
 func (d Dos) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 	end := make(chan int, 0)
-
 	go func() {
 		for i := 0; i < d.MaxRequests; i++ {
 			payloadConsumer <- CraftedPayload{
