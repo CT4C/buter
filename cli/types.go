@@ -32,7 +32,7 @@ func (h *Headers) Set(value string) error {
 		return nil
 	}
 
-	for _, subString := range strings.Split(value, " ") {
+	for _, subString := range strings.Split(value, ";") {
 		matched := headerPattern.FindAllStringSubmatch(subString, 1)
 		if matched != nil {
 			(*h)[matched[0][1]] = matched[0][2]
