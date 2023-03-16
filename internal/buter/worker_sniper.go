@@ -16,14 +16,26 @@ func (s *Sniper) Proceeded() int {
 	return s.producedPayloads
 }
 
-func (s *Sniper) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
+func (s *Sniper) ProducePayload(payloadConsumer PayloadConsumer) chan int {
 	endChan := make(chan int)
 	defer func() {
 		endChan <- 0
 	}()
-	defer close(payloadConsumer)
 
-	s.producedPayloads += buildPayload(s.attackValue, s.payloadNode, s.workingPayloadSet, payloadConsumer)
+	workingPayloadSet := make([]string, 1)
+
+	onUpdate := func(updatedTargetString string, payloadInserted string, payloadNumber int) {
+		workingPayloadSet[payloadNumber] = payloadInserted
+
+		workingPayloadSetCopy := make([]string, len(workingPayloadSet))
+		copy(workingPayloadSetCopy, workingPayloadSet)
+
+		payloadConsumer.Consume(updatedTargetString, workingPayloadSetCopy, nil)
+	}
+
+	s.producedPayloads += buildPayloadList(s.attackValue, s.payloadNode, onUpdate)
+
+	payloadConsumer.Close()
 
 	return endChan
 }

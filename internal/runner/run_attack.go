@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/edpryk/buter/cli"
 	"github.com/edpryk/buter/internal/buter"
+	"github.com/edpryk/buter/internal/connectors/payload"
 	"github.com/edpryk/buter/internal/helpers/prepare"
 	"github.com/edpryk/buter/internal/reporter"
-	"github.com/edpryk/buter/lib/transport"
 	"github.com/edpryk/buter/pkg/requester"
 )
 
@@ -27,13 +26,15 @@ var headers = map[string]string{
 
 func RunAttack(ctx context.Context, config AttackConfig) {
 	wg := &sync.WaitGroup{}
+	errorQueue := make(chan error, 1)
+
 	requestWorker := requester.NewRequestQueue(requester.QueueWorkerConfig{
 		MaxConcurrentRequests: config.MaxConcurrent,
 		Ctx:                   ctx,
 		Delay:                 config.Delay,
 		Retries:               config.Retries,
 	})
-	consumer, provider, _ := requestWorker.Run()
+	requestConsumer, responseProvider, _ := requestWorker.Run()
 	reporter := reporter.New()
 
 	totalPayloads, payloadSet, err := prepare.PreparePayloads(config.PayloadFiles)
@@ -58,34 +59,36 @@ func RunAttack(ctx context.Context, config AttackConfig) {
 		TotalPayloads: totalPayloads,
 	})
 
-	payloadProvider, _ := PayloadFactory.Launch()
+	payloadConsumer := payload.NewPayloadConsumer(requestConsumer, errorQueue, config.Method)
+
+	PayloadFactory.Launch(payloadConsumer)
+
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+
+	// 	transport.MutableTransit(
+	// 		payloadProvider,
+	// 		consumer,
+	// 		func(srcValue buter.CraftedPayload) requester.RequestParameters {
+	// 			return requester.RequestParameters{
+	// 				Url:      srcValue.Url,
+	// 				Method:   config.Method,
+	// 				Header:   srcValue.Headers,
+	// 				Payloads: srcValue.Payloads,
+	// 				Body:     srcValue.Body,
+	// 			}
+	// 		},
+	// 		time.Duration(0),
+	// 	)
+
+	// 	close(consumer)
+	// }()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-
-		transport.MutableTransit(
-			payloadProvider,
-			consumer,
-			func(srcValue buter.CraftedPayload) requester.RequestParameters {
-				return requester.RequestParameters{
-					Url:      srcValue.Url,
-					Method:   config.Method,
-					Header:   srcValue.Headers,
-					Payloads: srcValue.Payloads,
-					Body:     srcValue.Body,
-				}
-			},
-			time.Duration(0),
-		)
-
-		close(consumer)
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		reporter.StartWorker(provider, config.Filters, config.Stop, config.AttackCompletedSig)
+		reporter.StartWorker(responseProvider, config.Filters, config.Stop, config.AttackCompletedSig)
 	}()
 
 	wg.Wait()

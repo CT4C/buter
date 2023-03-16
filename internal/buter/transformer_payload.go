@@ -1,5 +1,14 @@
 package buter
 
+import (
+	"log"
+	"os"
+	"strings"
+
+	"github.com/edpryk/buter/internal/helpers/prepare"
+	"github.com/edpryk/buter/lib/convert"
+)
+
 type PayloadNode struct {
 	Points            [2]int
 	Number            int
@@ -60,4 +69,16 @@ func transformPayload(text string, payloadSet [][]string) (totalPayloads int, en
 	}
 
 	return totalPayloads, entryNode, nil
+}
+
+func transformHttpInputToString[V comparable](url string, headers map[string]V, body string) string {
+	rawHeaders, err := convert.ToString(headers)
+	if err != nil {
+		log.Println(err)
+		os.Exit(0)
+	}
+
+	// TODO: payload positions
+	attackValues := []string{url, rawHeaders, body}
+	return strings.Join(attackValues, prepare.AttackValueSeparator)
 }

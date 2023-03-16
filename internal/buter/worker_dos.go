@@ -4,22 +4,18 @@ import (
 	"context"
 )
 
-type DosConfig struct {
-	Ctx         context.Context
-	Url         string
-	Body        string
-	Headers     map[string]string
-	MaxRequests int
-}
-
 type Dos struct {
-	proceeded int
-	DosConfig
+	ctx         context.Context
+	proceeded   int
+	maxRequests int
+	attackValue string
 }
 
-func NewDos(config DosConfig) Dos {
+func NewDos(ctx context.Context, attackValue string, maxRequests int) Dos {
 	d := Dos{
-		DosConfig: config,
+		ctx:         ctx,
+		attackValue: attackValue,
+		maxRequests: maxRequests,
 	}
 
 	return d
@@ -29,19 +25,13 @@ func (d Dos) Proceeded() int {
 	return d.proceeded
 }
 
-func (d Dos) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
+func (d Dos) ProducePayload(payloadConsumer PayloadConsumer) chan int {
 	end := make(chan int, 0)
 	go func() {
-		for i := 0; i < d.MaxRequests; i++ {
-			payloadConsumer <- CraftedPayload{
-				Url:      d.Url,
-				Body:     d.Body,
-				Headers:  d.Headers,
-				Payloads: nil,
-			}
+		for i := 0; i < d.maxRequests; i++ {
+			payloadConsumer.Consume(d.attackValue, []string{}, nil)
+			// TODO: ctx
 		}
-
-		// close(payloadConsumer)
 		end <- 0
 	}()
 

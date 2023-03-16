@@ -16,7 +16,7 @@ type Cluster struct {
 	proceededPayloads int
 }
 
-func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
+func (c *Cluster) ProducePayload(payloadConsumer PayloadConsumer) chan int {
 	defer func() {
 		c.endSig <- 0
 	}()
@@ -34,10 +34,15 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 		updatedAttackValue = c.AttackValue
 	)
 
+	onUpdate := func(updatedTargetString, payloadInserted string, payloadNumber int) {
+		c.workingPayloadSet[payloadNumber] = payloadInserted
+		payloadConsumer.Consume(updatedTargetString, c.workingPayloadSet, nil)
+	}
+
 	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
 
 		if c.EntryNode.NextNode == nil {
-			producedPayloads := buildPayload(updatedAttackValue, c.EntryNode, c.workingPayloadSet, payloadConsumer)
+			producedPayloads := buildPayloadList(updatedAttackValue, c.EntryNode, onUpdate)
 
 			/*
 				1. Increment previous payload index
