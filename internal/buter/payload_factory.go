@@ -13,11 +13,6 @@ import (
 	"github.com/edpryk/buter/lib/convert"
 )
 
-type MapStringer interface {
-	Map() map[string]any
-	String() string
-}
-
 type Attacker interface {
 	Proceeded() int
 	ProducePayload(payloadConsumer chan CraftedPayload) chan int
@@ -47,7 +42,7 @@ type ProcessStatus struct {
 	Err     bool
 }
 
-type Buter struct {
+type PayloadFactory struct {
 	Config
 
 	attackValue     string
@@ -58,7 +53,7 @@ type Buter struct {
 	errQ            chan error
 }
 
-func (b *Buter) RunPrepareAttack() (payloadProvider chan CraftedPayload, err chan error) {
+func (b *PayloadFactory) Launch() (payloadProvider chan CraftedPayload, err chan error) {
 	go func() {
 		defer close(b.errQ)
 
@@ -97,7 +92,7 @@ func (b *Buter) RunPrepareAttack() (payloadProvider chan CraftedPayload, err cha
 		case <-b.attacker.ProducePayload(b.payloadProvider):
 			return
 		case <-b.Ctx.Done():
-			fmt.Println("Buter Canceled")
+			fmt.Println("PayloadFactory Canceled")
 			return
 		}
 	}()
@@ -105,7 +100,7 @@ func (b *Buter) RunPrepareAttack() (payloadProvider chan CraftedPayload, err cha
 	return b.payloadProvider, b.errQ
 }
 
-func (b *Buter) setAttacker(attackType string) error {
+func (b *PayloadFactory) setAttacker(attackType string) error {
 	switch attackType {
 	case cli.ClusterAttack:
 		b.attacker = NewCluster(b.Ctx, b.attackValue, b.payloadNode, b.TotalPayloads, len(b.PayloadSet))
@@ -127,12 +122,12 @@ func (b *Buter) setAttacker(attackType string) error {
 	}
 }
 
-func New(config Config) *Buter {
+func NewFactory(config Config) *PayloadFactory {
 	if config.QueueLength == 0 {
 		config.QueueLength = 1
 	}
 
-	b := &Buter{
+	b := &PayloadFactory{
 		Config:          config,
 		startTime:       time.Now(),
 		payloadProvider: make(chan CraftedPayload, config.QueueLength),

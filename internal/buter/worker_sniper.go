@@ -23,7 +23,7 @@ func (s *Sniper) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 	}()
 	defer close(payloadConsumer)
 
-	s.producedPayloads += proceedPayloads(s.attackValue, s.payloadNode, s.workingPayloadSet, payloadConsumer)
+	s.producedPayloads += buildPayload(s.attackValue, s.payloadNode, s.workingPayloadSet, payloadConsumer)
 
 	return endChan
 }

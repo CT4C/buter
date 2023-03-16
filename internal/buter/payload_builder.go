@@ -4,15 +4,15 @@ import (
 	"github.com/edpryk/buter/internal/helpers/prepare"
 )
 
-func updateValue(value string, payload string, positions [2]int) string {
-	return value[:positions[0]] + payload + value[positions[1]:]
+func insertPayload(target string, payload string, positions [2]int) string {
+	return target[:positions[0]] + payload + target[positions[1]:]
 }
 
-func proceedPayloads(value string, payloadNode *PayloadNode, workingPayloadsSet []string, payloadConsumer chan CraftedPayload) (produced int) {
+func buildPayload(target string, payloadNode *PayloadNode, workingPayloadsSet []string, payloadConsumer chan CraftedPayload) (produced int) {
 	for _, payload := range payloadNode.PayloadList {
 		workingPayloadsSet[payloadNode.Number] = payload
 
-		value = updateValue(value, payload, payloadNode.Points)
+		target = insertPayload(target, payload, payloadNode.Points)
 		payloadNode.CurrentPayloadIdx += 1
 		payloadNode.Points[1] = payloadNode.Points[0] + len(payload)
 		/*
@@ -27,7 +27,7 @@ func proceedPayloads(value string, payloadNode *PayloadNode, workingPayloadsSet 
 			1. Send to channel
 			2. Increment proceeded payload
 		*/
-		parsedAttackValue, _ := prepare.ParseAttackValue(value)
+		parsedAttackValue, _ := prepare.ParseAttackValue(target)
 
 		payloadConsumer <- CraftedPayload{
 			Url:      parsedAttackValue.Url,

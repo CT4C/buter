@@ -37,7 +37,7 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 	for c.EntryNode != nil && !(c.proceededPayloads == c.TotalPayloads) {
 
 		if c.EntryNode.NextNode == nil {
-			producedPayloads := proceedPayloads(updatedAttackValue, c.EntryNode, c.workingPayloadSet, payloadConsumer)
+			producedPayloads := buildPayload(updatedAttackValue, c.EntryNode, c.workingPayloadSet, payloadConsumer)
 
 			/*
 				1. Increment previous payload index
@@ -98,7 +98,7 @@ func (c *Cluster) ProducePayload(payloadConsumer chan CraftedPayload) chan int {
 
 			c.EntryNode.WorkingPayload = nextPayload
 
-			updatedAttackValue = updateValue(updatedAttackValue, c.EntryNode.WorkingPayload, c.EntryNode.Points)
+			updatedAttackValue = insertPayload(updatedAttackValue, c.EntryNode.WorkingPayload, c.EntryNode.Points)
 
 			/*
 				Current Points correction
