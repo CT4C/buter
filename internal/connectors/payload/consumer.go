@@ -3,7 +3,7 @@ package payload
 import (
 	"sync"
 
-	"github.com/edpryk/buter/internal/helpers/prepare"
+	"github.com/edpryk/buter/internal/buter"
 	"github.com/edpryk/buter/pkg/requester"
 )
 
@@ -32,7 +32,7 @@ func (consumer ConsumerPayload) Consume(updatedPayloadValue string, payloads []s
 		return
 	}
 
-	parsedAttackValue, err := prepare.ParseAttackValue(updatedPayloadValue)
+	parsedAttackValue, err := buter.TransformAttackValueToHttpRequestProps(updatedPayloadValue)
 	if err != nil {
 		consumer.errQueue <- err
 		return
