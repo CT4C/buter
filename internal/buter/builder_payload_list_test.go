@@ -1,6 +1,7 @@
 package buter
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -15,16 +16,19 @@ func (listener *PayloadListener) onUpdate(updatedTargetString string, payloadIns
 	listener.Called(updatedTargetString, payloadInserted, payloadNumber)
 }
 
+var targetString = "His name is !Name! and he lives in the Mexico"
+var points = [2]int{12, 18}
+var payloadList1 = []string{"Bill", "Matthew"}
+
 func TestBuildPayloadList(t *testing.T) {
 	// arrange
-	targetString := "His name is !Name! and he lives in the Mexico"
-	payloadList1 := []string{"Bill", "Matthew"}
+	targetStringTest1 := targetString
 
 	entryPayloadNode := PayloadNode{
 		Number:            0,
-		Points:            [2]int{0, 6},
+		Points:            points,
 		PayloadList:       payloadList1,
-		WorkingPayload:    targetString,
+		WorkingPayload:    targetStringTest1,
 		CurrentPayloadIdx: 0,
 		PreviousNode:      nil,
 	}
@@ -36,8 +40,24 @@ func TestBuildPayloadList(t *testing.T) {
 
 	t.Run("Expected: Updated targetString with payload", func(t *testing.T) {
 		// act
-		produced := buildPayloadList(targetString, &entryPayloadNode, payloadListener.onUpdate)
+		produced := buildPayloadList(targetStringTest1, &entryPayloadNode, payloadListener.onUpdate)
 
 		require.Equal(t, 2, produced)
+	})
+}
+
+func TestInsertPayload(t *testing.T) {
+	t.Run("Expected: payload inserted successfully", func(t *testing.T) {
+		// arrange
+		targetStringTest2 := targetString
+		payload := "Bill"
+		payloadPattern := "!Name!"
+		expectedString := strings.Replace(targetStringTest2, payloadPattern, payload, 1)
+
+		// act
+		updatedTargetString := insertPayload(targetStringTest2, payload, points)
+
+		// assert
+		require.Equal(t, expectedString, updatedTargetString)
 	})
 }

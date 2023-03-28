@@ -67,7 +67,6 @@ func (factory attackFactory) Launch() chan int {
 
 func (factory attackFactory) onPayloadUpdated(updatedTargetString string, payloadInserted string, payloadNumber int) {
 	factory.workingPayloadSet[payloadNumber] = payloadInserted
-
 	/*
 		as factory.workingPayloadSet is a pointer need to copy this before pass
 		to the consumer to prevent inconsistent state
@@ -87,7 +86,7 @@ func (factory attackFactory) dosWorker() chan int {
 	return factory.isClosed
 }
 
-func (factory attackFactory) sniperWorker() {
+func (factory *attackFactory) sniperWorker() {
 	factory.producedItems += buildPayloadList(
 		factory.RawPayload,
 		factory.PayloadNode,

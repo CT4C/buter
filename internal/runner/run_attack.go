@@ -20,10 +20,6 @@ type AttackConfig struct {
 	cli.UserConfig
 }
 
-var headers = map[string]string{
-	"User-Agent": "unknown",
-}
-
 func RunAttack(ctx context.Context, config AttackConfig) {
 	wg := &sync.WaitGroup{}
 	errorQueue := make(chan error, 1)
@@ -62,28 +58,6 @@ func RunAttack(ctx context.Context, config AttackConfig) {
 	payloadConsumer := payload.NewPayloadConsumer(requestConsumer, errorQueue, config.Method)
 
 	PayloadFactory.Launch(payloadConsumer)
-
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-
-	// 	transport.MutableTransit(
-	// 		payloadProvider,
-	// 		consumer,
-	// 		func(srcValue buter.CraftedPayload) requester.RequestParameters {
-	// 			return requester.RequestParameters{
-	// 				Url:      srcValue.Url,
-	// 				Method:   config.Method,
-	// 				Header:   srcValue.Headers,
-	// 				Payloads: srcValue.Payloads,
-	// 				Body:     srcValue.Body,
-	// 			}
-	// 		},
-	// 		time.Duration(0),
-	// 	)
-
-	// 	close(consumer)
-	// }()
 
 	wg.Add(1)
 	go func() {
