@@ -54,29 +54,26 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 			}
 		}
 
-		duration := res.Duration
-		code := res.StatusCode
-		payloads := ""
+		line := make(reportLine, 0)
 
-		for number, p := range res.Payloads {
-			payloads += fmt.Sprintf("%-2sP_%d: %21s", " ", number+1, p)
+		line.add("Req", requestNumber)
+
+		for number, payload := range res.Payloads {
+			line.add(fmt.Sprintf("P_%d", number+1), payload)
 		}
 
-		report := fmt.Sprintf("%-3s %7d", "Req:", requestNumber)
-		report += payloads
-
-		report += fmt.Sprintf(" Status %-5d", code)
-		report += fmt.Sprintf("Duration %5dms", duration/time.Millisecond)
-		report += fmt.Sprintf(" Length %5d", res.ContentLength)
+		line.add("Status", res.StatusCode)
+		line.add("Duration", res.Duration/time.Millisecond)
+		line.add("Length", res.ContentLength)
 
 		if res.StatusCode == http.StatusFound {
-			loc, err := res.Location()
+			location, err := res.Location()
 			if err == nil {
-				report += fmt.Sprintf(" Location %5s", loc.Path)
+				line.add("Location", location.Path)
 			}
 		}
 
-		log.Println(report)
+		log.Println(line.string())
 
 		if len(stopper.Status()) > 0 {
 			if lists.Contain(stopper.Status(), fmt.Sprint(res.StatusCode)) {

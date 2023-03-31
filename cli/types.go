@@ -24,7 +24,7 @@ func (ps *PayloadFiles) String() string {
 type Headers map[string]string
 
 func (h *Headers) Set(value string) error {
-	headerPattern := regexp.MustCompile("(?P<key>[^:]+):[ ]{0,1}(.+)")
+	headerPattern := regexp.MustCompile("(?P<key>[^:]+):[ ]{0,1}(?P<value>.+)")
 
 	*h = make(map[string]string)
 
@@ -38,10 +38,6 @@ func (h *Headers) Set(value string) error {
 			(*h)[matched[0][1]] = matched[0][2]
 		}
 	}
-
-	// if err := json.Unmarshal([]byte(value), h); err != nil {
-	// 	return err
-	// }
 
 	return nil
 }

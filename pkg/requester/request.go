@@ -33,11 +33,12 @@ func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int)
 		/*
 			TODO: Need to realize where to close body
 		*/
-		defer res.(http.Response).Body.Close()
 
 		if err != nil {
 			errCh <- err
 		} else {
+			defer res.(http.Response).Body.Close()
+
 			resCh <- CustomResponse{
 				Response: res.(http.Response),
 				Duration: time.Since(startTime),

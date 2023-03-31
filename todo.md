@@ -6,4 +6,4 @@
 1. Need to connect cobra for cli ?
 2. Update design
 3. Cover with tests
-4. Pprof
+4. pprof
