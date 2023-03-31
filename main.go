@@ -35,6 +35,8 @@ func main() {
 	log.SetFlags(2)
 
 	for _, config := range configs {
+		cli.PrintConfig(config)
+
 		if config.Timeout > 0 {
 			rootContext, cancelRootContext = context.WithTimeout(context.Background(), time.Duration(10*time.Second))
 		} else {
@@ -53,7 +55,7 @@ func main() {
 
 		select {
 		case <-sigEnd:
-			log.Printf("%3s Closed by Interruption\n", "")
+			log.Printf("\n%3s Closed by Interruption\n", "")
 		case <-attackCompletedSig:
 		}
 
