@@ -3,49 +3,35 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
+	"log"
+	"os"
 	"strconv"
 	"strings"
+
+	"github.com/edpryk/buter/lib/convert"
 )
 
 type Filters map[string][]string
 
-func (f *Filters) Set(value string) error {
-	filerSeparator := ";"
-	filterValueSeparator := ","
-	filterRegexp := regexp.MustCompile("([^:]+):(.+)")
-	rawFilters := strings.Split(value, filerSeparator)
-
-	for _, filter := range rawFilters {
-		matched := filterRegexp.FindStringSubmatch(filter)
-		if len(matched) <= 0 {
-			continue
-		}
-
-		filterName := matched[1]
-
-		if strings.Contains(strings.Join(knownFilters, "/"), filterName) == false {
-			return fmt.Errorf("unknown filter %s", filterName)
-		}
-
-		filterValue := strings.Split(matched[2], filterValueSeparator)
-
-		switch filterName {
-		case knownFilters[0]:
-			fallthrough
-		case knownFilters[1]:
-			for _, stringedInteger := range filterValue {
-				_, ok := (*f)[filterName]
-				if ok == false {
-					(*f)[filterName] = make([]string, 0)
-				}
-
-				(*f)[filterName] = append((*f)[filterName], stringedInteger)
-			}
-		}
-
+func (f *Filters) Join(key string, value any) {
+	if !strings.Contains(strings.Join(knownFilters, "/"), key) {
+		log.Println(fmt.Errorf("unknown filter %s", key))
+		os.Exit(1)
 	}
 
+	_, ok := (*f)[key]
+	if !ok {
+		(*f)[key] = make([]string, 0)
+	}
+
+	(*f)[key] = append((*f)[key], fmt.Sprint(value))
+}
+
+func (f *Filters) Set(value string) error {
+	lineSeparator := ";"
+	valueSeparator := ","
+	keyValuePattern := "([^:]+):(.+)"
+	convert.StringToKeyValue[string](value, lineSeparator, valueSeparator, keyValuePattern, f)
 	return nil
 }
 
