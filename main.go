@@ -14,12 +14,8 @@ import (
 
 var (
 	configs           []cli.UserConfig
-	payloadSet        [][]string
-	totalPayloads     int
 	rootContext       context.Context
 	cancelRootContext context.CancelFunc
-
-	err error
 
 	sigEnd             = make(chan os.Signal)
 	attackCompletedSig = make(chan int)
