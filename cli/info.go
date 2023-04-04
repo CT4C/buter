@@ -2,8 +2,8 @@ package cli
 
 import "fmt"
 
-const author = "Anonym"
-const email = "Anonym"
+const author = "edpryk"
+const email = "edpryk@gmail.com"
 const version = "0.0.2"
 
 func PrintInfo() {
