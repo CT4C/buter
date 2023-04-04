@@ -8,7 +8,6 @@ func insertPayload(targetString string, payload string, positions [2]int) string
 
 func buildPayloadList(targetString string, payloadNode *PayloadNode, onUpdate onUpdate) (produced int) {
 	for _, payload := range payloadNode.PayloadList {
-		// workingPayloadsSet[payloadNode.Number] = payload
 
 		targetString = insertPayload(targetString, payload, payloadNode.Points)
 		payloadNode.CurrentPayloadIdx += 1
@@ -18,10 +17,6 @@ func buildPayloadList(targetString string, payloadNode *PayloadNode, onUpdate on
 			the workingPayloadSet slice, and last values will changed
 			when a client will read from consumer
 		*/
-		// workingPayloadCopy := make([]string, len(workingPayloadsSet))
-		// copy(workingPayloadCopy, workingPayloadsSet)
-
-		// payloadConsumer.Consume(targetString, workingPayloadCopy, nil)
 		onUpdate(targetString, payload, payloadNode.Number)
 		produced++
 	}

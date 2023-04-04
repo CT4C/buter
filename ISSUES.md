@@ -4,5 +4,6 @@
 - [x] No filters feature
 - [x] No Stop on condition
 - [ ] No Tests
-- [ ] Multiple Content Type Not supported
+- [x] Multiple Content Type Not supported (added raw body)
 - [ ] Raw Request not supported
+- [ ] Add printer module for printing data
