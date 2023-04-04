@@ -28,10 +28,7 @@ func (f *Filters) Join(key string, value any) {
 }
 
 func (f *Filters) Set(value string) error {
-	lineSeparator := ";"
-	valueSeparator := ","
-	keyValuePattern := "([^:]+):(.+)"
-	convert.StringToKeyValue[string](value, lineSeparator, valueSeparator, keyValuePattern, f)
+	convert.StringToKeyValue[string](value, parseLineSeparator, parseValueSeparator, parseKeyparseValueSeparator, f)
 	return nil
 }
 

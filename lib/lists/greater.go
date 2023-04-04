@@ -8,7 +8,7 @@ func IntGreaterEq(list []int, value int) bool {
 			break
 		}
 
-		isGreater = value > item
+		isGreater = value >= item
 	}
 
 	return isGreater
