@@ -44,7 +44,7 @@ func RunAttack(ctx context.Context, config AttackConfig) {
 		headers[key] = config.Headers[key]
 	}
 
-	PayloadFactory := buter.NewFactory(buter.Config{
+	payloadFactory := buter.NewFactory(buter.Config{
 		Ctx:           ctx,
 		Url:           config.Url,
 		Body:          config.Body,
@@ -57,7 +57,7 @@ func RunAttack(ctx context.Context, config AttackConfig) {
 
 	payloadConsumer := payload.NewPayloadConsumer(requestConsumer, errorQueue, config.Method)
 
-	PayloadFactory.Launch(payloadConsumer)
+	payloadFactory.Launch(payloadConsumer)
 
 	wg.Add(1)
 	go func() {
