@@ -3,6 +3,7 @@ package requester
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -16,10 +17,17 @@ func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int)
 	go func() {
 		requestCaller := func() (any, error) {
 			reader := strings.NewReader(parameters.Body)
+			u, err := url.Parse(parameters.Url)
+			if err != nil {
+				errCh <- err
+				return nil, nil
+			}
 
 			if parameters.Method == http.MethodPost {
 				parameters.Header["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body))
 			}
+
+			parameters.Header["Host"] = u.Host
 
 			return Do(
 				parameters.Method,

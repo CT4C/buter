@@ -41,7 +41,8 @@ func ParseFlags() []UserConfig {
 	flag.Usage = printUsage
 
 	config := &UserConfig{
-		Body: "",
+		Body:    "",
+		Headers: make(Headers),
 		Filters: Filters{
 			"length": make([]string, 0),
 			"status": make([]string, 0),

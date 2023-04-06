@@ -13,6 +13,6 @@ func PrintConfig(config UserConfig) {
 	if len(config.Body) > 0 {
 		fmt.Println("-----BODY--------")
 		fmt.Println(config.Body)
-		fmt.Println("-----------------")
 	}
+	fmt.Println("-----------------")
 }
