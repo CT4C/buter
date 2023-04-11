@@ -21,6 +21,13 @@ type AttackConfig struct {
 }
 
 func RunAttack(ctx context.Context, config AttackConfig) {
+	// merge headers
+	for key := range headers {
+		config.Headers[key] = headers[key]
+	}
+
+	cli.PrintConfig(config.UserConfig)
+
 	wg := &sync.WaitGroup{}
 	errorQueue := make(chan error, 1)
 
@@ -39,16 +46,11 @@ func RunAttack(ctx context.Context, config AttackConfig) {
 		os.Exit(1)
 	}
 
-	// merge headers
-	for key := range config.Headers {
-		headers[key] = config.Headers[key]
-	}
-
 	payloadFactory := buter.NewFactory(buter.Config{
 		Ctx:           ctx,
 		Url:           config.Url,
 		Body:          config.Body,
-		Headers:       headers,
+		Headers:       config.Headers,
 		PayloadSet:    payloadSet,
 		AttackType:    config.AttackType,
 		MaxRequests:   config.DosRequest,
