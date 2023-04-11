@@ -10,24 +10,30 @@ import (
 	"github.com/edpryk/buter/lib/stability"
 )
 
+func updateHeaders(URL string, method string, body string, headers map[string]string) error {
+	u, err := url.Parse(URL)
+	if err != nil {
+		return err
+	}
+
+	if method == http.MethodPost || method == http.MethodPatch || method == http.MethodPut {
+		headers["Content-Length"] = fmt.Sprintf("%d", len(body))
+	}
+
+	headers["Host"] = u.Host
+
+	return nil
+}
+
 func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int) (<-chan CustomResponse, <-chan error) {
 	resCh := make(chan CustomResponse, 1)
 	errCh := make(chan error, 1)
 
+	updateHeaders(parameters.Url, parameters.Method, parameters.Body, parameters.Header)
+
 	go func() {
 		requestCaller := func() (any, error) {
 			reader := strings.NewReader(parameters.Body)
-			u, err := url.Parse(parameters.Url)
-			if err != nil {
-				errCh <- err
-				return nil, nil
-			}
-
-			if parameters.Method == http.MethodPost {
-				parameters.Header["Content-Length"] = fmt.Sprintf("%d", len(parameters.Body))
-			}
-
-			parameters.Header["Host"] = u.Host
 
 			return Do(
 				parameters.Method,
@@ -38,9 +44,6 @@ func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int)
 		}
 		startTime := time.Now()
 		res, err := stability.Retry(requestCaller, retries, delay)
-		/*
-			TODO: Need to realize where to close body
-		*/
 
 		if err != nil {
 			errCh <- err
