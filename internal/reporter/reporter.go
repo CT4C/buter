@@ -64,7 +64,7 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 
 		line.add("Status", res.StatusCode)
 		line.add("Duration", res.Duration/time.Millisecond)
-		line.add("Length", res.ContentLength)
+		line.add("Length", len(res.Body))
 
 		if res.StatusCode == http.StatusFound {
 			location, err := res.Location()

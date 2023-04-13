@@ -22,9 +22,10 @@ type AttackConfig struct {
 
 func RunAttack(ctx context.Context, config AttackConfig) {
 	// merge headers
-	for key := range headers {
-		config.Headers[key] = headers[key]
+	for key := range config.Headers {
+		headers[key] = config.Headers[key]
 	}
+	config.Headers = headers
 
 	cli.PrintConfig(config.UserConfig)
 

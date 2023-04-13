@@ -2,6 +2,7 @@ package requester
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/edpryk/buter/lib/stability"
 )
+
+const maxBodyLen = 10 * 1024
 
 func updateHeaders(URL string, method string, body string, headers map[string]string) error {
 	u, err := url.Parse(URL)
@@ -50,10 +53,18 @@ func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int)
 		} else {
 			defer res.(http.Response).Body.Close()
 
+			data := make([]byte, maxBodyLen)
+			n, err := res.(http.Response).Body.Read(data)
+			if err != nil && err != io.EOF {
+				errCh <- err
+				return
+			}
+
 			resCh <- CustomResponse{
 				Response: res.(http.Response),
 				Duration: time.Since(startTime),
 				Payloads: parameters.Payloads,
+				Body:     data[:n],
 			}
 		}
 	}()

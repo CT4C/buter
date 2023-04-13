@@ -2,7 +2,6 @@ package buter
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -69,7 +68,7 @@ func (factory *PayloadFactory) Launch(consumer PayloadConsumer) {
 		case <-attackFactory.Launch():
 			return
 		case <-factory.Ctx.Done():
-			fmt.Println("PayloadFactory Canceled")
+			log.Println("PayloadFactory Canceled")
 			return
 		}
 	}()

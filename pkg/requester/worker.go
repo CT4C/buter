@@ -18,6 +18,7 @@ type QueueWorkerConfig struct {
 type CustomResponse struct {
 	Duration time.Duration
 	Payloads []string
+	Body     []byte
 	http.Response
 }
 
@@ -71,7 +72,7 @@ func (rq *QueueWorker) Run() (reqConsumer chan RequestParameters, resProvider ch
 				limitedQ.Receive(requestParameters)
 
 			case <-rq.Ctx.Done():
-				log.Println("Worked Canceled")
+				log.Println("Request Worker Canceled")
 				allowRun = false
 				break
 			}

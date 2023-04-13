@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -49,10 +50,12 @@ func main() {
 
 		select {
 		case <-sigEnd:
-			log.Printf("\n%3s Closed by Interruption\n", "")
+			log.Println("Closed by Interruption")
+			cancelRootContext()
 		case <-attackCompletedSig:
 		}
 
-		log.Printf("%7s Attack completed in %s\n", "Summary:", time.Now().Sub(attackStartTime))
+		log.Printf("Attack completed in %s\n", time.Now().Sub(attackStartTime))
+		runtime.GC()
 	}
 }
