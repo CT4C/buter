@@ -28,7 +28,7 @@ func (f *Filters) Join(key string, value any) {
 }
 
 func (f *Filters) Set(value string) error {
-	convert.StringToKeyValue[string](value, parseLineSeparator, parseValueSeparator, parseKeyparseValueSeparator, f)
+	convert.StringToKeyValue[string](value, parseLineSeparator, parseValueSeparator, parseKeyValueSeparator, f)
 	return nil
 }
 

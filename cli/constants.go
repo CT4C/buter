@@ -1,7 +1,7 @@
 package cli
 
 const (
-	parseLineSeparator          = ";"
-	parseKeyparseValueSeparator = ":"
-	parseValueSeparator         = ","
+	parseLineSeparator     = ";"
+	parseKeyValueSeparator = ":"
+	parseValueSeparator    = ","
 )

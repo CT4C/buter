@@ -29,8 +29,8 @@ func (f *Stopper) Join(key string, value any) {
 func (f *Stopper) Set(value string) error {
 	filersSeparator := ";"
 	filterparseValueSeparator := ","
-	parseKeyparseValueSeparator := ":"
-	convert.StringToKeyValue[string](value, filersSeparator, filterparseValueSeparator, parseKeyparseValueSeparator, f)
+	parseKeyValueSeparator := ":"
+	convert.StringToKeyValue[string](value, filersSeparator, filterparseValueSeparator, parseKeyValueSeparator, f)
 	return nil
 }
 
