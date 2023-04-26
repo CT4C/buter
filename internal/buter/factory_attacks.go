@@ -118,8 +118,9 @@ func (factory *attackFactory) clusterWorker() {
 			*/
 			factory.producedItems += producedPayloads
 			factory.PayloadNode.CurrentPayloadIdx = 0
-			factory.PayloadNode = factory.PayloadNode.PreviousNode
-			factory.PayloadNode.CurrentPayloadIdx += 1
+			// factory.PayloadNode = factory.PayloadNode.PreviousNode
+			factory.PayloadNode.Prev().CurrentPayloadIdx += 1
+			// factory.PayloadNode.CurrentPayloadIdx += 1
 			factory.workingPayloadSet = make([]string, factory.TotalPayloadPositions)
 		} else {
 			// ### TOP level payload processing ###
@@ -194,7 +195,7 @@ func (factory *attackFactory) clusterWorker() {
 				Added working payload to working payload set
 			*/
 			/*
-				Copy created because it was lose fo pointer to the
+				Copy created because it was lose of ptr to the
 				PayloadNode
 			*/
 			currentNodeCopy := *factory.PayloadNode

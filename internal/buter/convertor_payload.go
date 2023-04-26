@@ -22,6 +22,14 @@ type PayloadNode struct {
 	CurrentPayloadIdx int
 }
 
+func (pn *PayloadNode) Next() *PayloadNode {
+	return pn.NextNode
+}
+
+func (pn *PayloadNode) Prev() *PayloadNode {
+	return pn.PreviousNode
+}
+
 type HttpRequestProps struct {
 	Url     string
 	Headers map[string]string
@@ -36,7 +44,7 @@ var (
 /*
 Transform [][]string to Linked List
 */
-func transformPayloadPayloadListToLinked(text string, payloadSet [][]string) (totalPayloads int, entryNode *PayloadNode, err error) {
+func convertPayloadListToLinked(text string, payloadSet [][]string) (totalPayloads int, entryNode *PayloadNode, err error) {
 	matchedPositions := rePayloadPosition.FindAllStringSubmatchIndex(text, -1)
 	matchedPatterns := rePayloadPosition.FindAllString(text, -1)
 	positionsAmount := len(matchedPositions)
