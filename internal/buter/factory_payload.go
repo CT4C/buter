@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"github.com/edpryk/buter/cli"
 )
 
 type Attacker interface {
@@ -49,16 +51,40 @@ func (factory *PayloadFactory) Launch(consumer PayloadConsumer) {
 		*/
 		attackValue := transformHttpRequestPropsToString(factory.Url, factory.Headers, factory.Body)
 
-		totalPayloads, entryPayloadNode, err := transformPayloadPayloadListToLinked(attackValue, factory.PayloadSet)
+		_, entryPayloadNode, err := transformPayloadPayloadListToLinked(attackValue, factory.PayloadSet)
 		if err != nil {
 			log.Println(err)
 			os.Exit(1)
 		}
+
+		totalPayloads := 0
+
+		if factory.AttackType == cli.ClusterAttack {
+			for _, list := range factory.PayloadSet {
+				totalPayloads *= len(list)
+			}
+		}
+
+		if factory.AttackType == cli.SniperAttack {
+			totalPayloads = len(factory.PayloadSet[0])
+		}
+
+		if factory.AttackType == cli.PitchForkAttack {
+			for _, list := range factory.PayloadSet {
+				l := len(list)
+
+				totalPayloads = l
+				if l > totalPayloads {
+					totalPayloads = l
+				}
+			}
+		}
+
 		attackFactory := newAttackFactory(attackConfig{
 			Ctx:                   factory.Ctx,
 			Consumer:              consumer,
 			AttackType:            factory.AttackType,
-			RawPayload:            attackValue,
+			TargetTextRaw:         attackValue,
 			PayloadNode:           entryPayloadNode,
 			ItemProducePlan:       totalPayloads,
 			TotalPayloadPositions: len(factory.PayloadSet),
