@@ -9,9 +9,9 @@ import (
 var (
 	urlUsage            = fmt.Sprintf("-%-3s %s %s", urlFlag, "<http://localhost?param1=!abc!&param_N=!efg!>", "(Url)")
 	payloadUsage        = fmt.Sprintf("-%-3s %s %s", payloadFlag, "<payload-file_1> -p <payload-file_N>", "(Payload)")
-	attackTypeUsage     = fmt.Sprintf("-%-3s %s %s", attackTypeFlag, strings.Join([]string{ClusterAttack, SniperAttack, DOSAttack}, "/"), "(AttackType)")
-	threadsUsage        = fmt.Sprintf("-%-3s %s %s", threadsFlag, "5", "(Max Concurrent Threads)")
-	headersUsage        = fmt.Sprintf("-%-3s %s %s", headersFlag, "'{ \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/99.1\" }'", "(Headers)")
+	attackTypeUsage     = fmt.Sprintf("-%-3s %s %s", attackTypeFlag, strings.Join([]string{ClusterAttack, SniperAttack, DOSAttack, PitchForkAttack}, "/"), "(AttackType)")
+	threadsUsage        = fmt.Sprintf("-%-3s %s %s", threadsFlag, "5", "(Max Threads)")
+	headersUsage        = fmt.Sprintf("-%-3s %s %s", headersFlag, "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/99.1  Connection:close'", "(Headers, double space as separator)")
 	delayUsage          = fmt.Sprintf("-%-3s %s %s", delayFlag, "800", "(Delay in milliseconds)")
 	methodUsage         = fmt.Sprintf("-%-3s %s %s", methodFlag, "POST", "(HTTP method)")
 	retriesAmountUsage  = fmt.Sprintf("-%-3s %s %s", retriesAmountFlag, "3", "(Retries on request error)")

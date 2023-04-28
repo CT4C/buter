@@ -13,7 +13,7 @@ import (
 )
 
 type PayloadNode struct {
-	Points            [2]int
+	PayloadSpan       [2]int
 	Number            int
 	NextNode          *PayloadNode
 	PayloadList       []string
@@ -68,7 +68,7 @@ func transformPayloadPayloadListToLinked(text string, payloadSet [][]string) (to
 			CurrentPayloadIdx: 0,
 			WorkingPayload:    matchedPatterns[number],
 		}
-		newNode.Points = [2]int{matchedPositions[number][0], matchedPositions[number][1]}
+		newNode.PayloadSpan = [2]int{matchedPositions[number][0], matchedPositions[number][1]}
 		// Init Next Node
 		if previousNode != nil && previousNode.NextNode == nil {
 			previousNode.NextNode = newNode

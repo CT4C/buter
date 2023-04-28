@@ -26,7 +26,7 @@ func TestBuildPayloadList(t *testing.T) {
 
 	entryPayloadNode := PayloadNode{
 		Number:            0,
-		Points:            points,
+		PayloadSpan:       points,
 		PayloadList:       payloadList1,
 		WorkingPayload:    targetStringTest1,
 		CurrentPayloadIdx: 0,

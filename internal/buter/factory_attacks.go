@@ -14,7 +14,7 @@ type attackConfig struct {
 	PayloadNode *PayloadNode
 
 	AttackType            string
-	RawPayload            string
+	TargetTextRaw         string
 	ItemProducePlan       int
 	TotalPayloadPositions int
 }
@@ -56,6 +56,9 @@ func (factory attackFactory) Launch() chan int {
 		case cli.DOSAttack:
 			factory.dosWorker()
 			return
+		case cli.PitchForkAttack:
+			factory.pitchFork()
+			return
 		default:
 			log.Println(errAttackNotSupported)
 			os.Exit(1)
@@ -65,21 +68,19 @@ func (factory attackFactory) Launch() chan int {
 	return factory.isClosed
 }
 
-func (factory attackFactory) onPayloadUpdated(updatedTargetString string, payloadInserted string, payloadNumber int) {
+func (factory *attackFactory) onPayloadUpdated(updatedTargetString string, payloadInserted string, payloadNumber int) {
 	factory.workingPayloadSet[payloadNumber] = payloadInserted
-	/*
-		as factory.workingPayloadSet is a pointer need to copy this before pass
-		to the consumer to prevent inconsistent state
-	*/
+
 	workingPayloadSetCopy := make([]string, len(factory.workingPayloadSet))
 	copy(workingPayloadSetCopy, factory.workingPayloadSet)
 
 	factory.Consumer.Consume(updatedTargetString, workingPayloadSetCopy, nil)
+	factory.workingPayloadSet = make([]string, factory.TotalPayloadPositions)
 }
 
 func (factory attackFactory) dosWorker() chan int {
 	for i := 0; i < factory.ItemProducePlan; i++ {
-		factory.Consumer.Consume(factory.RawPayload, []string{}, nil)
+		factory.Consumer.Consume(factory.TargetTextRaw, []string{}, nil)
 		// TODO: ctx
 	}
 
@@ -88,10 +89,61 @@ func (factory attackFactory) dosWorker() chan int {
 
 func (factory *attackFactory) sniperWorker() {
 	factory.producedItems += buildPayloadList(
-		factory.RawPayload,
+		factory.TargetTextRaw,
 		factory.PayloadNode,
 		factory.onPayloadUpdated,
 	)
+}
+
+func (factory *attackFactory) pitchFork() {
+	updatedValue := factory.TargetTextRaw
+	for factory.producedItems < factory.ItemProducePlan {
+		// walk through each node once
+		for i := 0; i < factory.TotalPayloadPositions; i++ {
+			node := factory.PayloadNode
+			if node.CurrentPayloadIdx == len(node.PayloadList) {
+				/*
+					Save point for situation when one list shorted
+					than another one
+				*/
+				node.CurrentPayloadIdx = 0
+			}
+			updatedValue = insertPayload(updatedValue, node.PayloadList[node.CurrentPayloadIdx], node.PayloadSpan)
+			node.WorkingPayload = node.PayloadList[node.CurrentPayloadIdx]
+			node.CurrentPayloadIdx++
+
+			// Update payload working set for advance is in reporter
+			factory.workingPayloadSet[node.Number] = node.WorkingPayload
+
+			// Switch node back
+			if node.NextNode == nil {
+				factory.onPayloadUpdated(updatedValue, node.WorkingPayload, node.Number)
+				factory.PayloadNode = node.PreviousNode
+			} else {
+				/*
+					Update payload positions
+				*/
+				shift := node.NextNode.PayloadSpan[0] - node.PayloadSpan[1]
+				if shift < 0 {
+					shift = shift * -1
+				}
+				/*
+					Update Current Node Span
+				*/
+				node.PayloadSpan[1] = node.PayloadSpan[0] + len(node.WorkingPayload)
+				/*
+					Update Next Node Span
+				*/
+				nextNodeSpanStart := node.PayloadSpan[1] + shift
+				nextNodeSpanEnd := nextNodeSpanStart + len(node.NextNode.WorkingPayload)
+				factory.PayloadNode = node.NextNode
+				factory.PayloadNode.PayloadSpan[0] = nextNodeSpanStart
+				factory.PayloadNode.PayloadSpan[1] = nextNodeSpanEnd
+			}
+
+		}
+		factory.producedItems += 1
+	}
 }
 
 func (factory *attackFactory) clusterWorker() {
@@ -103,7 +155,7 @@ func (factory *attackFactory) clusterWorker() {
 
 		if factory.PayloadNode.NextNode == nil {
 			producedPayloads := buildPayloadList(
-				factory.RawPayload,
+				factory.TargetTextRaw,
 				factory.PayloadNode,
 				factory.onPayloadUpdated,
 			)
@@ -154,40 +206,40 @@ func (factory *attackFactory) clusterWorker() {
 			nextPayload := factory.PayloadNode.PayloadList[factory.PayloadNode.CurrentPayloadIdx]
 
 			/*
-				Points correction - when one payload
+				PayloadSpan correction - when one payload
 				length greater then another one
 			*/
 			if len(factory.PayloadNode.WorkingPayload) < len(nextPayload) {
-				nextPointStart := factory.PayloadNode.NextNode.Points[0]
+				nextPointStart := factory.PayloadNode.NextNode.PayloadSpan[0]
 				payloadShift := (len(nextPayload) - len(currentPayload))
-				factory.PayloadNode.NextNode.Points[0] = nextPointStart + payloadShift
-				factory.PayloadNode.NextNode.Points[1] = nextPointStart + len(nextPayload)
+				factory.PayloadNode.NextNode.PayloadSpan[0] = nextPointStart + payloadShift
+				factory.PayloadNode.NextNode.PayloadSpan[1] = nextPointStart + len(nextPayload)
 			}
 
 			factory.PayloadNode.WorkingPayload = nextPayload
 
-			factory.RawPayload = insertPayload(
-				factory.RawPayload,
+			factory.TargetTextRaw = insertPayload(
+				factory.TargetTextRaw,
 				factory.PayloadNode.WorkingPayload,
-				factory.PayloadNode.Points,
+				factory.PayloadNode.PayloadSpan,
 			)
 
 			/*
-				Current Points correction
+				Current PayloadSpan correction
 
 				Need to add method to the node to proceed this case
 			*/
-			factory.PayloadNode.Points[1] = factory.PayloadNode.Points[0] + len(factory.PayloadNode.WorkingPayload)
+			factory.PayloadNode.PayloadSpan[1] = factory.PayloadNode.PayloadSpan[0] + len(factory.PayloadNode.WorkingPayload)
 			/*
 				Defined payload correction, check if it exists yet
 				found and update points, if it doesn't exists that'factory
 				mean that all defined pattern already in substitute
 				process within payloads from lists
 			*/
-			positions := rePayloadPosition.FindAllStringSubmatchIndex(factory.RawPayload, -1)
+			positions := rePayloadPosition.FindAllStringSubmatchIndex(factory.TargetTextRaw, -1)
 			if len(positions) > 0 {
-				factory.PayloadNode.NextNode.Points[0] = positions[0][0]
-				factory.PayloadNode.NextNode.Points[1] = positions[0][1]
+				factory.PayloadNode.NextNode.PayloadSpan[0] = positions[0][0]
+				factory.PayloadNode.NextNode.PayloadSpan[1] = positions[0][1]
 			}
 
 			/*
