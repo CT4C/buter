@@ -75,7 +75,6 @@ func (factory *attackFactory) onPayloadUpdated(updatedTargetString string, paylo
 	copy(workingPayloadSetCopy, factory.workingPayloadSet)
 
 	factory.Consumer.Consume(updatedTargetString, workingPayloadSetCopy, nil)
-	factory.workingPayloadSet = make([]string, factory.TotalPayloadPositions)
 }
 
 func (factory attackFactory) dosWorker() chan int {

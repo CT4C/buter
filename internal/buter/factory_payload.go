@@ -80,6 +80,10 @@ func (factory *PayloadFactory) Launch(consumer PayloadConsumer) {
 			}
 		}
 
+		if factory.AttackType == cli.DOSAttack {
+			totalPayloads = factory.MaxRequests
+		}
+
 		attackFactory := newAttackFactory(attackConfig{
 			Ctx:                   factory.Ctx,
 			Consumer:              consumer,

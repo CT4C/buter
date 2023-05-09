@@ -10,9 +10,13 @@ func PrintConfig(config UserConfig) {
 		}
 	}
 
-	if len(config.Body) > 0 {
+	if len(config.Body) > 0 && len(config.Body) < 513 {
 		fmt.Println("-----BODY--------")
 		fmt.Println(config.Body)
+	} else {
+		fmt.Println("-----BODY--------")
+		fmt.Printf("%s...%d bytes\n", config.Body[:512], len(config.Body))
 	}
+
 	fmt.Println("-----------------")
 }
