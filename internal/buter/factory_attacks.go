@@ -69,8 +69,6 @@ func (factory attackFactory) Launch() chan int {
 }
 
 func (factory *attackFactory) onPayloadUpdated(updatedTargetString string, payloadInserted string, payloadNumber int) {
-	factory.workingPayloadSet[payloadNumber] = payloadInserted
-
 	workingPayloadSetCopy := make([]string, len(factory.workingPayloadSet))
 	copy(workingPayloadSetCopy, factory.workingPayloadSet)
 
@@ -113,7 +111,6 @@ func (factory *attackFactory) pitchFork() {
 
 			// Update payload working set for advance is in reporter
 			factory.workingPayloadSet[node.Number] = node.WorkingPayload
-
 			// Switch node back
 			if node.NextNode == nil {
 				factory.onPayloadUpdated(updatedValue, node.WorkingPayload, node.Number)
