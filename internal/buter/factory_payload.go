@@ -51,7 +51,7 @@ func (factory *PayloadFactory) Launch(consumer PayloadConsumer) {
 		*/
 		attackValue := transformHttpRequestPropsToString(factory.Url, factory.Headers, factory.Body)
 
-		_, entryPayloadNode, err := transformPayloadPayloadListToLinked(attackValue, factory.PayloadSet)
+		_, entryPayloadNode, err := convertPayloadListToLinked(attackValue, factory.PayloadSet)
 		if err != nil {
 			log.Println(err)
 			os.Exit(1)
