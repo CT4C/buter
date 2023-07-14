@@ -2,7 +2,6 @@ package buter
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -52,7 +51,7 @@ func (factory *PayloadFactory) Launch(consumer PayloadConsumer) {
 		*/
 		attackValue := transformHttpRequestPropsToString(factory.Url, factory.Headers, factory.Body)
 
-		_, entryPayloadNode, err := transformPayloadPayloadListToLinked(attackValue, factory.PayloadSet)
+		_, entryPayloadNode, err := convertPayloadListToLinked(attackValue, factory.PayloadSet)
 		if err != nil {
 			log.Println(err)
 			os.Exit(1)
@@ -81,6 +80,10 @@ func (factory *PayloadFactory) Launch(consumer PayloadConsumer) {
 			}
 		}
 
+		if factory.AttackType == cli.DOSAttack {
+			totalPayloads = factory.MaxRequests
+		}
+
 		attackFactory := newAttackFactory(attackConfig{
 			Ctx:                   factory.Ctx,
 			Consumer:              consumer,
@@ -95,7 +98,7 @@ func (factory *PayloadFactory) Launch(consumer PayloadConsumer) {
 		case <-attackFactory.Launch():
 			return
 		case <-factory.Ctx.Done():
-			fmt.Println("PayloadFactory Canceled")
+			log.Println("PayloadFactory Canceled")
 			return
 		}
 	}()

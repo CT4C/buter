@@ -18,6 +18,7 @@ type QueueWorkerConfig struct {
 type CustomResponse struct {
 	Duration time.Duration
 	Payloads []string
+	Body     []byte
 	http.Response
 }
 
@@ -37,6 +38,13 @@ type QueueWorker struct {
 	QueueWorkerConfig
 }
 
+/*
+	TODO: Add onResponse method
+	TODO: Add addToQueue method to proceed new request
+
+	move reqConsumer to addToQueue
+	move resProvider to onResponse
+*/
 func (rq *QueueWorker) Run() (reqConsumer chan RequestParameters, resProvider chan CustomResponse, errQ chan error) {
 	go func() {
 		limitedQ := NewLimitedQ(LimitedQConfig{
@@ -64,7 +72,7 @@ func (rq *QueueWorker) Run() (reqConsumer chan RequestParameters, resProvider ch
 				limitedQ.Receive(requestParameters)
 
 			case <-rq.Ctx.Done():
-				log.Println("Worked Canceled")
+				log.Println("Request Worker Canceled")
 				allowRun = false
 				break
 			}
