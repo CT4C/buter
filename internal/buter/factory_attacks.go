@@ -57,7 +57,7 @@ func (factory attackFactory) Launch() chan int {
 			factory.dosWorker()
 			return
 		case cli.PitchForkAttack:
-			factory.pitchFork()
+			factory.pitchforkWorker()
 			return
 		default:
 			log.Println(errAttackNotSupported)
@@ -69,6 +69,8 @@ func (factory attackFactory) Launch() chan int {
 }
 
 func (factory *attackFactory) onPayloadUpdated(updatedTargetString string, payloadInserted string, payloadNumber int) {
+	factory.workingPayloadSet = append(factory.workingPayloadSet, payloadInserted)
+
 	workingPayloadSetCopy := make([]string, len(factory.workingPayloadSet))
 	copy(workingPayloadSetCopy, factory.workingPayloadSet)
 
@@ -92,7 +94,7 @@ func (factory *attackFactory) sniperWorker() {
 	)
 }
 
-func (factory *attackFactory) pitchFork() {
+func (factory *attackFactory) pitchforkWorker() {
 	updatedValue := factory.TargetTextRaw
 	for factory.producedItems < factory.ItemProducePlan {
 		// walk through each node once
