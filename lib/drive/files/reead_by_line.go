@@ -8,7 +8,6 @@ import (
 )
 
 func ReadByLine(filename string) ([]string, error) {
-
 	_, err := os.Stat(filename)
 	if err != nil {
 		return nil, err
@@ -25,11 +24,11 @@ func ReadByLine(filename string) ([]string, error) {
 
 	for {
 		line, err := reader.ReadString('\n')
-		content = append(content, strings.TrimSpace(line))
-
 		if err == io.EOF {
 			break
 		}
+
+		content = append(content, strings.TrimSpace(line))
 
 		if err != nil {
 			return nil, err

@@ -21,7 +21,7 @@ type Stopper interface {
 }
 
 /*
-	Apply interface
+Apply interface
 */
 type Response interface {
 	ContentLength() int
@@ -35,9 +35,15 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 	requestNumber := 0
 
 	for res := range responseQ {
+		rawBodyLen := len(res.Body)
+
+		for key := range res.Header {
+			rawBodyLen += len(key) + len(res.Header.Get(key))
+		}
+
 		requestNumber++
 		if len(filters.Length()) > 0 {
-			if lists.Contain(filters.Length(), fmt.Sprint(res.ContentLength)) {
+			if lists.Contain(filters.Length(), fmt.Sprint(rawBodyLen)) {
 				continue
 			}
 		}
@@ -64,7 +70,7 @@ func (r Reporter) StartWorker(responseQ chan requester.CustomResponse, filters F
 
 		line.add("Status", res.StatusCode)
 		line.add("Duration", res.Duration/time.Millisecond)
-		line.add("Length", res.ContentLength)
+		line.add("Length", rawBodyLen)
 
 		if res.StatusCode == http.StatusFound {
 			location, err := res.Location()

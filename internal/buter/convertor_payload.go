@@ -13,13 +13,21 @@ import (
 )
 
 type PayloadNode struct {
-	Points            [2]int
+	PayloadSpan       [2]int
 	Number            int
 	NextNode          *PayloadNode
 	PayloadList       []string
 	PreviousNode      *PayloadNode
 	WorkingPayload    string
 	CurrentPayloadIdx int
+}
+
+func (pn *PayloadNode) Next() *PayloadNode {
+	return pn.NextNode
+}
+
+func (pn *PayloadNode) Prev() *PayloadNode {
+	return pn.PreviousNode
 }
 
 type HttpRequestProps struct {
@@ -36,7 +44,7 @@ var (
 /*
 Transform [][]string to Linked List
 */
-func transformPayloadPayloadListToLinked(text string, payloadSet [][]string) (totalPayloads int, entryNode *PayloadNode, err error) {
+func convertPayloadListToLinked(text string, payloadSet [][]string) (totalPayloads int, entryNode *PayloadNode, err error) {
 	matchedPositions := rePayloadPosition.FindAllStringSubmatchIndex(text, -1)
 	matchedPatterns := rePayloadPosition.FindAllString(text, -1)
 	positionsAmount := len(matchedPositions)
@@ -68,7 +76,7 @@ func transformPayloadPayloadListToLinked(text string, payloadSet [][]string) (to
 			CurrentPayloadIdx: 0,
 			WorkingPayload:    matchedPatterns[number],
 		}
-		newNode.Points = [2]int{matchedPositions[number][0], matchedPositions[number][1]}
+		newNode.PayloadSpan = [2]int{matchedPositions[number][0], matchedPositions[number][1]}
 		// Init Next Node
 		if previousNode != nil && previousNode.NextNode == nil {
 			previousNode.NextNode = newNode

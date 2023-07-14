@@ -3,46 +3,34 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
+	"log"
+	"os"
 	"strings"
+
+	"github.com/edpryk/buter/lib/convert"
 )
 
 type Stopper map[string][]string
 
-func (f *Stopper) Set(value string) error {
-	filerSeparator := ";"
-	filterValueSeparator := ","
-	filterRegexp := regexp.MustCompile("([^:]+):(.+)")
-	rawFilters := strings.Split(value, filerSeparator)
-
-	for _, filter := range rawFilters {
-		matched := filterRegexp.FindStringSubmatch(filter)
-		if len(matched) <= 0 {
-			continue
-		}
-
-		filterName := matched[1]
-
-		if strings.Contains(strings.Join(knownStoppers, "/"), filterName) == false {
-			return fmt.Errorf("unknown stopper %s", filterName)
-		}
-
-		filterValue := strings.Split(matched[2], filterValueSeparator)
-
-		switch filterName {
-		case knownStoppers[0]:
-			for _, stringedInteger := range filterValue {
-				_, ok := (*f)[filterName]
-				if ok == false {
-					(*f)[filterName] = make([]string, 0)
-				}
-
-				(*f)[filterName] = append((*f)[filterName], stringedInteger)
-			}
-		}
-
+func (f *Stopper) Join(key string, value any) {
+	if !strings.Contains(strings.Join(knownStoppers, "/"), key) {
+		log.Println(fmt.Errorf("unknown filter %s", key))
+		os.Exit(1)
 	}
 
+	_, ok := (*f)[key]
+	if !ok {
+		(*f)[key] = make([]string, 0)
+	}
+
+	(*f)[key] = append((*f)[key], fmt.Sprint(value))
+}
+
+func (f *Stopper) Set(value string) error {
+	filersSeparator := ";"
+	filterparseValueSeparator := ","
+	parseKeyValueSeparator := ":"
+	convert.StringToKeyValue[string](value, filersSeparator, filterparseValueSeparator, parseKeyValueSeparator, f)
 	return nil
 }
 
