@@ -69,7 +69,7 @@ func (factory attackFactory) Launch() chan int {
 }
 
 func (factory *attackFactory) onPayloadUpdated(updatedTargetString string, payloadInserted string, payloadNumber int) {
-	factory.workingPayloadSet = append(factory.workingPayloadSet, payloadInserted)
+	factory.workingPayloadSet[payloadNumber] = payloadInserted
 
 	workingPayloadSetCopy := make([]string, len(factory.workingPayloadSet))
 	copy(workingPayloadSetCopy, factory.workingPayloadSet)
