@@ -7,7 +7,7 @@ import (
 )
 
 /*
-	TODO: Add raw request support.
+TODO: Add raw request support.
 */
 type UserConfig struct {
 	Url           string  `json:"url"`
@@ -38,6 +38,11 @@ print an error and usage
 and exits process
 */
 func ParseFlags() []UserConfig {
+	if len(os.Args) < 2 {
+		printUsage()
+		os.Exit(0)
+	}
+
 	flag.Usage = printUsage
 
 	config := &UserConfig{
