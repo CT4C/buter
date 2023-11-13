@@ -8,7 +8,6 @@ func insertPayload(targetString string, payload string, positions [2]int) string
 
 func buildPayloadList(targetString string, payloadNode *PayloadNode, onUpdate onUpdate) (produced int) {
 	for _, payload := range payloadNode.PayloadList {
-
 		targetString = insertPayload(targetString, payload, payloadNode.PayloadSpan)
 		payloadNode.CurrentPayloadIdx += 1
 		payloadNode.PayloadSpan[1] = payloadNode.PayloadSpan[0] + len(payload)

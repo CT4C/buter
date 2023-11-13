@@ -57,7 +57,7 @@ func (factory *PayloadFactory) Launch(consumer PayloadConsumer) {
 			os.Exit(1)
 		}
 
-		totalPayloads := 0
+		totalPayloads := 1
 
 		if factory.AttackType == cli.ClusterAttack {
 			for _, list := range factory.PayloadSet {

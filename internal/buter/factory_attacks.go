@@ -45,7 +45,6 @@ func (factory attackFactory) Launch() chan int {
 			factory.Consumer.Close()
 			factory.isClosed <- 0
 		}()
-
 		switch factory.AttackType {
 		case cli.ClusterAttack:
 			factory.clusterWorker()
@@ -150,7 +149,15 @@ func (factory *attackFactory) clusterWorker() {
 	*/
 
 	for factory.PayloadNode != nil && !(factory.producedItems == factory.ItemProducePlan) {
-
+		/*
+			next is nil indicates that we are on the last position
+			- set last list payloads
+			- send fully patched text with paylods to consumer
+			- updalte previous payload index
+			- set current not to previous
+			- previous payload is set next one in palce
+			- went to last payload list again
+		*/
 		if factory.PayloadNode.NextNode == nil {
 			producedPayloads := buildPayloadList(
 				factory.TargetTextRaw,
@@ -167,10 +174,12 @@ func (factory *attackFactory) clusterWorker() {
 				for moving back/forward btw nodes
 			*/
 			factory.producedItems += producedPayloads
+			// set current index to 0, required for future iterrations
 			factory.PayloadNode.CurrentPayloadIdx = 0
-			// factory.PayloadNode = factory.PayloadNode.PreviousNode
+			// indicate to use next payload in previous position
 			factory.PayloadNode.Prev().CurrentPayloadIdx += 1
-			// factory.PayloadNode.CurrentPayloadIdx += 1
+			// set current node to previous
+			factory.PayloadNode = factory.PayloadNode.Prev()
 			factory.workingPayloadSet = make([]string, factory.TotalPayloadPositions)
 		} else {
 			// ### TOP level payload processing ###
@@ -183,7 +192,7 @@ func (factory *attackFactory) clusterWorker() {
 				3. Increment Previous payload index ?
 			*/
 
-			isEndOfCurrentPayloadProcessing := factory.PayloadNode.CurrentPayloadIdx == len(factory.PayloadNode.PayloadList)
+			isEndOfCurrentPayloadProcessing := factory.PayloadNode.CurrentPayloadIdx >= len(factory.PayloadNode.PayloadList)
 
 			if isEndOfCurrentPayloadProcessing {
 				/*
@@ -216,13 +225,11 @@ func (factory *attackFactory) clusterWorker() {
 			}
 
 			factory.PayloadNode.WorkingPayload = nextPayload
-
 			factory.TargetTextRaw = insertPayload(
 				factory.TargetTextRaw,
 				factory.PayloadNode.WorkingPayload,
 				factory.PayloadNode.PayloadSpan,
 			)
-
 			/*
 				Current PayloadSpan correction
 

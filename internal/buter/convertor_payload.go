@@ -50,7 +50,6 @@ func convertPayloadListToLinked(text string, payloadSet [][]string) (totalPayloa
 	positionsAmount := len(matchedPositions)
 	payloadsAmount := len(payloadSet)
 	totalPayloads = 1
-
 	// Validate payloads and position amount
 	if positionsAmount != payloadsAmount {
 		if positionsAmount < payloadsAmount {
@@ -68,7 +67,6 @@ func convertPayloadListToLinked(text string, payloadSet [][]string) (totalPayloa
 	var previousNode *PayloadNode
 	for number, payloads := range payloadSet {
 		totalPayloads *= len(payloads)
-
 		newNode := &PayloadNode{
 			Number:            number,
 			PayloadList:       payloads,

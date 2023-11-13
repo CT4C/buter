@@ -37,7 +37,6 @@ func AsyncRequestWithRetry(parameters RequestParameters, retries int, delay int)
 	go func() {
 		requestCaller := func() (any, error) {
 			reader := strings.NewReader(parameters.Body)
-
 			return Do(
 				parameters.Method,
 				parameters.Url,

@@ -39,11 +39,11 @@ type QueueWorker struct {
 }
 
 /*
-	TODO: Add onResponse method
-	TODO: Add addToQueue method to proceed new request
+TODO: Add onResponse method
+TODO: Add addToQueue method to proceed new request
 
-	move reqConsumer to addToQueue
-	move resProvider to onResponse
+move reqConsumer to addToQueue
+move resProvider to onResponse
 */
 func (rq *QueueWorker) Run() (reqConsumer chan RequestParameters, resProvider chan CustomResponse, errQ chan error) {
 	go func() {

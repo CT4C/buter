@@ -30,7 +30,7 @@ func printConfigTemplate() {
 	}
 
 	config[0].Stop.Set("status:200")
-	config[0].Filters.Set("status:500,403,401")
+	config[0].Filters.Set("status:500")
 
 	b, err := json.Marshal(config)
 	if err != nil {

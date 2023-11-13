@@ -95,7 +95,6 @@ func ParseFlags() []UserConfig {
 		if err != nil {
 			panic(err)
 		}
-
 		batchConfig = configs
 	} else {
 		batchConfig = append(batchConfig, *config)
